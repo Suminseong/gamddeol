@@ -1,6 +1,7 @@
 /*
  * 감떨 알파 레이아웃.
  * 색·간격·글꼴은 Gemini 디자인 토큰 v0.2(docs/design/tokens/design-tokens.css)의 CSS 변수만 쓴다.
+ * 예외는 아래 '앱 범위 보완 변수' 하나(--app-control-border)뿐이며, 디자인 원본 토큰 파일은 바꾸지 않는다.
  * 반응형 기준은 디자인 사양의 1200px / 768px.
  * 웹 글꼴은 외부에서 불러오지 않는다(토큰의 글꼴 목록 중 기기에 있는 것을 쓴다).
  *
@@ -8,7 +9,28 @@
  * --color-text-muted는 면(surface) 위에서 라이트 2.79:1, 다크 2.78:1이라 읽어야 하는 글자에 쓰지 않는다.
  * 대신 --color-text-secondary(라이트 5.59:1, 다크 5.57:1)를 쓴다. 비활성 버튼 글자는 기준 예외라 그대로 둔다.
  * --status-candidate-fg/bg 라이트 4.17:1, --status-warning-fg/bg 라이트 3.30:1도 미달이라 글자색으로 쓰지 않는다.
+ *
+ * 컨트롤 경계(WCAG 2.2 1.4.11 비텍스트 대비 3:1) 메모:
+ * 원본 --color-border-strong은 면 위에서 라이트 1.73:1·다크 1.72:1, --color-border-subtle(원고 입력칸)은 1.32:1·1.21:1이라
+ * 입력·원고·선택·보조 버튼의 경계로 쓰기에 모자란다. 그래서 컨트롤 경계만 --app-control-border를 쓴다.
+ * 내용을 담은 컨트롤(실행 중 읽기 전용 원고, 실행 중 비활성 관점 선택)은 잠긴 동안에도 내용과 경계가 읽히도록
+ * 투명도 대신 배경색으로 상태를 표시한다. 비활성 버튼은 1.4.3·1.4.11 예외라 흐리게(opacity) 둔다.
  */
+
+/*
+ * 앱 범위 보완 변수: 컨트롤 경계색.
+ * 값은 Gemini 권장값(2026-11-22)이고, 앞뒤 배경과의 대비는 src/app/contrast.test.ts가 토큰 값으로 다시 계산한다.
+ *   라이트 #8A8579: 면 #FFFFFF 3.68 · 캔버스 #F6F5F2 3.37 · 보조 캔버스 #ECEAE4 3.06 · 오류 배경 #FBEAEA 3.16
+ *   다크   #737882: 면 #222428 3.51 · 캔버스 #18191B 3.97 · 보조 캔버스 #121315 4.19 · 오류 배경 #381B1B 3.53
+ * 디자인 원본 토큰에 정식 컨트롤 경계 토큰이 생기면 이 변수를 지우고 그 토큰을 쓴다.
+ */
+:root {
+  --app-control-border: #8a8579;
+}
+
+[data-theme='dark'] {
+  --app-control-border: #737882;
+}
 
 *,
 *::before,
@@ -162,11 +184,26 @@ a:hover {
 .text-input {
   min-height: 40px;
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid var(--app-control-border);
   border-radius: var(--radius-md);
   background: var(--color-surface-elevated);
   color: var(--color-text-primary);
   font: inherit;
+}
+
+.text-input:disabled {
+  /* 브라우저 기본 select:disabled 투명도(Chromium 0.7)를 끄고, 배경·글자색으로 잠김을 표시한다. */
+  opacity: 1;
+  background-color: var(--color-canvas-secondary);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+}
+
+.text-input::placeholder,
+.manuscript-input::placeholder {
+  /* 브라우저 기본 placeholder 색은 다크에서 3.37:1(Chromium)이라 보조 글자색으로 고정한다. */
+  color: var(--color-text-secondary);
+  opacity: 1;
 }
 
 .key-row {
@@ -196,11 +233,14 @@ a:hover {
   width: 100%;
   min-height: 320px;
   padding: var(--space-4);
+  /* .flat-reader-surface의 --color-border-subtle 경계를 컨트롤 경계로 바꾼다(열람 영역인 결과 본문은 그대로). */
+  border-color: var(--app-control-border);
   resize: vertical;
 }
 
 .manuscript-input[readonly] {
-  opacity: 0.8;
+  /* 실행 중 잠김 표시. 투명도를 쓰면 경계가 3:1 아래로 내려가므로 배경색으로 구분한다. */
+  background-color: var(--color-canvas-secondary);
 }
 
 .counter {
@@ -236,7 +276,7 @@ button {
 .button-secondary {
   min-height: 40px;
   padding: var(--space-2) var(--space-4);
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid var(--app-control-border);
   border-radius: var(--radius-md);
   background: var(--color-surface-elevated);
   color: var(--color-text-primary);

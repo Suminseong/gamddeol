@@ -11,6 +11,7 @@ export function MockBanner({ transport }: { transport: MockTransport }) {
       <label>
         {copy.mock.scenarioLabel}{' '}
         <select
+          className="text-input"
           value={scenario}
           onChange={(event) => {
             const next = event.target.value as MockScenario;
