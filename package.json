@@ -16,7 +16,11 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "e2e": "playwright test",
-    "check": "npm run typecheck && npm test && npm run build && npm run e2e"
+    "check": "npm run typecheck && npm test && npm run build && npm run e2e",
+    "poc:readers": "node experiments/virtual-readers/run.ts",
+    "typecheck:experiments": "tsc --noEmit -p experiments/tsconfig.json",
+    "test:experiments": "vitest run --config experiments/vitest.config.ts",
+    "check:experiments": "npm run typecheck:experiments && npm run test:experiments && npm run poc:readers"
   },
   "dependencies": {
     "react": "19.3.1",
