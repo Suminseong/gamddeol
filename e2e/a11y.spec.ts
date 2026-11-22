@@ -37,7 +37,7 @@ test.describe('360px 화면', () => {
     expect(result.scrollWidth).toBeLessThanOrEqual(result.width);
 
     const sizes = await page.evaluate(() =>
-      [...document.querySelectorAll<HTMLElement>('input, textarea, select')].map((el) => ({
+      [...document.querySelectorAll<HTMLElement>('input:not([type="radio"]):not([type="checkbox"]), textarea, select')].map((el) => ({
         id: el.id,
         fontSize: parseFloat(getComputedStyle(el).fontSize),
       })),
@@ -73,6 +73,40 @@ test('키보드 순서는 키 → 등록 → 지우기 → 원고 → 관점 →
     await page.keyboard.press('Tab');
   }
   expect(order).toEqual(['openai-key', '등록', '지우기', 'manuscript', 'review-perspective', '감평 실행']);
+});
+
+test('관점은 라디오 그룹에서 방향키로 선택하고 탭으로 실행 버튼에 이동한다', async ({ page }) => {
+  await page.goto('review');
+  await registerFakeKey(page);
+  await fillUiCheckText(page);
+  const general = page.getByRole('radio', { name: '일반 감평' });
+  const pacing = page.getByRole('radio', { name: '전개·몰입' });
+  await general.focus();
+  await expect(general).toBeChecked();
+  await page.keyboard.press('ArrowRight');
+  await expect(pacing).toBeFocused();
+  await expect(pacing).toBeChecked();
+  await expect(page.locator('#review-perspective-description')).toContainText('전개 속도');
+  await page.keyboard.press('Tab');
+  await expect(runButton(page)).toBeFocused();
+});
+
+test('강제 색상에서도 선택 관점과 키보드 초점이 보인다', async ({ page }) => {
+  await page.emulateMedia({ forcedColors: 'active' });
+  await page.goto('review');
+  const general = page.getByRole('radio', { name: '일반 감평' });
+  const pacing = page.getByRole('radio', { name: '전개·몰입' });
+  await general.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(pacing).toBeChecked();
+  await expect(pacing).toBeFocused();
+  const style = await pacing.locator('..').locator('.perspective-option-surface').evaluate((element) => {
+    const computed = getComputedStyle(element);
+    return { borderWidth: parseFloat(computed.borderTopWidth), outlineWidth: parseFloat(computed.outlineWidth), outlineStyle: computed.outlineStyle };
+  });
+  expect(style.borderWidth).toBeGreaterThanOrEqual(3);
+  expect(style.outlineWidth).toBeGreaterThanOrEqual(2);
+  expect(style.outlineStyle).toBe('solid');
 });
 
 test('키보드로 실행하면 취소 버튼으로, 끝나면 실행 버튼으로 초점이 돌아온다', async ({ page }) => {

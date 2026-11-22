@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react';
 import type { ReviewConfig } from '../../review/config';
-import { isReviewPerspective, REVIEW_PERSPECTIVES, type ReviewPerspective } from '../../review/perspectives';
+import { REVIEW_PERSPECTIVES, type ReviewPerspective } from '../../review/perspectives';
 import { OPENAI_RESPONSES_ENDPOINT } from '../../transport/endpoint';
 import { copy } from '../copy';
+import './segmented.css';
 
 export type RunBlocker = 'running' | 'no_key' | 'empty' | 'too_long' | null;
 
@@ -47,30 +48,31 @@ export function RunPanel({
   const selected = REVIEW_PERSPECTIVES[perspective];
   return (
     <section className="panel run-panel" aria-labelledby="disclosure-heading">
-      <div className="review-perspective">
-        <label htmlFor="review-perspective">{copy.run.perspective}</label>
-        <select
-          id="review-perspective"
-          className="text-input"
-          value={perspective}
-          disabled={running}
-          aria-describedby="review-perspective-description review-perspective-timing"
-          onChange={(event) => {
-            const value = event.currentTarget.value;
-            if (isReviewPerspective(value)) onPerspectiveChange(value);
-          }}
-        >
-          {Object.entries(REVIEW_PERSPECTIVES).map(([value, { label }]) => (
-            <option value={value} key={value}>{label}</option>
+      <fieldset className="review-perspective perspective-fieldset" aria-describedby="review-perspective-description review-perspective-timing">
+        <legend>{copy.run.perspective}</legend>
+        <div className="perspective-segments">
+          {(Object.keys(REVIEW_PERSPECTIVES) as ReviewPerspective[]).map((value) => (
+            <label className="perspective-option" key={value}>
+              <input
+                id={value === 'general' ? 'review-perspective' : `review-perspective-${value}`}
+                type="radio"
+                name="review-perspective"
+                value={value}
+                checked={perspective === value}
+                disabled={running}
+                onChange={() => onPerspectiveChange(value)}
+              />
+              <span className="perspective-option-surface">{REVIEW_PERSPECTIVES[value].label}</span>
+            </label>
           ))}
-        </select>
+        </div>
         <p id="review-perspective-description" className="hint perspective-description">
           {selected.description}
         </p>
         <p id="review-perspective-timing" className="hint">
           {copy.run.perspectiveTiming}
         </p>
-      </div>
+      </fieldset>
       <div className="disclosure" id="send-disclosure">
         <h2 id="disclosure-heading" className="disclosure-heading">
           {copy.run.disclosureLead}

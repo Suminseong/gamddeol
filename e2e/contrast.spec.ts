@@ -122,8 +122,10 @@ const controls = (page: Page): [Locator, string][] => [
   [page.getByRole('button', { name: '등록' }), '등록 버튼'],
   [page.getByRole('button', { name: '지우기' }), '지우기 버튼'],
   [manuscriptInput(page), '원고 입력'],
-  [page.getByRole('combobox', { name: '감평 관점' }), '관점 선택'],
 ];
+
+const selectedPerspective = (page: Page) => page.getByRole('radio', { name: '일반 감평' });
+const selectedPerspectiveSurface = (page: Page) => selectedPerspective(page).locator('..').locator('.perspective-option-surface');
 
 for (const scheme of ['light', 'dark'] as const) {
   test.describe(`${scheme} 테마`, () => {
@@ -136,6 +138,9 @@ for (const scheme of ['light', 'dark'] as const) {
 
     test('입력·원고·선택·보조 버튼 경계가 안팎 배경과 3:1 이상이다', async ({ page }) => {
       for (const [locator, name] of controls(page)) await expectVisibleBoundary(locator, name);
+      for (const surface of await page.locator('.perspective-option-surface').all()) {
+        await expectVisibleBoundary(surface, '관점 선택');
+      }
     });
 
     test('placeholder 글자가 입력칸 배경과 4.5:1 이상이다', async ({ page }) => {
@@ -154,7 +159,7 @@ for (const scheme of ['light', 'dark'] as const) {
       await fillUiCheckText(page);
       // 탭 순서대로 키보드로 옮겨 가며 잰다(:focus-visible이 키보드 초점 기준으로 켜지도록).
       await keyInput(page).focus();
-      for (const [locator, name] of [...controls(page), [runButton(page), '감평 실행 버튼'] as [Locator, string]]) {
+      for (const [locator, name] of controls(page)) {
         await expect(locator).toBeFocused();
         const m = await measure(locator);
         expect(m.outlineStyle, `${name}: 초점 표시`).toBe('solid');
@@ -162,6 +167,17 @@ for (const scheme of ['light', 'dark'] as const) {
         expect(m.outlineVsOuter, `${name}: 초점 표시 vs 바깥 배경`).toBeGreaterThanOrEqual(3);
         await page.keyboard.press('Tab');
       }
+      await expect(selectedPerspective(page)).toBeFocused();
+      const selectedFocus = await measure(selectedPerspectiveSurface(page));
+      expect(selectedFocus.outlineStyle).toBe('solid');
+      expect(selectedFocus.outlineWidth).toBeGreaterThanOrEqual(2);
+      expect(selectedFocus.outlineVsOuter).toBeGreaterThanOrEqual(3);
+      await page.keyboard.press('Tab');
+      await expect(runButton(page)).toBeFocused();
+      const runFocus = await measure(runButton(page));
+      expect(runFocus.outlineStyle).toBe('solid');
+      expect(runFocus.outlineWidth).toBeGreaterThanOrEqual(2);
+      expect(runFocus.outlineVsOuter).toBeGreaterThanOrEqual(3);
     });
 
     test('실행 중 읽기 전용 원고와 비활성 관점 선택도 경계가 보이고 상태가 구별된다', async ({ page }) => {
@@ -176,9 +192,10 @@ for (const scheme of ['light', 'dark'] as const) {
       await registerFakeKey(page);
       await fillUiCheckText(page);
 
-      const selector = page.getByRole('combobox', { name: '감평 관점' });
+      const selector = selectedPerspective(page);
+      const selectorSurface = selectedPerspectiveSurface(page);
       const idleManuscript = await measure(manuscriptInput(page));
-      const idleSelector = await measure(selector);
+      const idleSelector = await measure(selectorSurface);
 
       await runButton(page).focus();
       await page.keyboard.press('Enter');
@@ -186,7 +203,7 @@ for (const scheme of ['light', 'dark'] as const) {
       await expect(selector).toBeDisabled();
 
       const busyManuscript = await expectVisibleBoundary(manuscriptInput(page), '읽기 전용 원고');
-      const busySelector = await expectVisibleBoundary(selector, '비활성 관점 선택');
+      const busySelector = await expectVisibleBoundary(selectorSurface, '비활성 관점 선택');
       await expectVisibleBoundary(page.getByRole('button', { name: '취소' }), '취소 버튼');
       expect(busyManuscript.inner, '읽기 전용 원고 배경이 바뀐다').not.toBe(idleManuscript.inner);
       expect(busySelector.inner, '비활성 관점 선택 배경이 바뀐다').not.toBe(idleSelector.inner);

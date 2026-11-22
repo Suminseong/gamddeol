@@ -16,6 +16,7 @@ import { isFramed } from './security/frameGuard';
 import { createKeySession } from './session/keySession';
 import { createMockTransport } from './transport/mockTransport';
 import { createOpenAITransport } from './transport/openaiTransport';
+import './app/neumorphism.css';
 
 /**
  * 조립 지점: 여기서만 실제 OpenAI 전송과 모의 전송 중 하나를 고른다.
