@@ -3,12 +3,14 @@ import { buildResponsesRequest } from './buildRequest';
 import { REVIEW_CONFIG, type ReviewConfig } from './config';
 import { reviewErrorFromHttp, reviewErrorFromTransport } from './errors';
 import { parseResponsesBody } from './parseResponse';
+import type { ReviewPerspective } from './perspectives';
 import { ReviewError, type ReviewResult } from './types';
 import { checkManuscript } from './validate';
 
 export interface ReviewInput {
   apiKey: string;
   manuscript: string;
+  perspective?: ReviewPerspective;
 }
 
 export interface ReviewService {
@@ -30,12 +32,12 @@ export function createReviewService(
   return {
     config,
     source: transport.kind,
-    async review({ apiKey, manuscript }, options = {}) {
+    async review({ apiKey, manuscript, perspective }, options = {}) {
       if (!apiKey) throw new ReviewError('no_key');
       const check = checkManuscript(manuscript, config);
       if (!check.ok) throw new ReviewError('invalid_input', { inputProblem: check.reason });
 
-      const body = buildResponsesRequest(manuscript, config);
+      const body = buildResponsesRequest(manuscript, config, perspective);
       const startedAt = now();
 
       let response;

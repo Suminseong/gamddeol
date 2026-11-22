@@ -48,6 +48,7 @@ export const copy = {
   },
 
   run: {
+    perspective: '감평 관점',
     disclosureLead: '감평 실행을 누를 때만, 아래 두 가지를 OpenAI 공식 엔드포인트 한 곳으로 보냅니다.',
     sendKey: 'API 키 → Authorization 헤더',
     sendManuscript: '지금 입력한 원고 본문 → 요청 본문',
@@ -83,7 +84,7 @@ export const copy = {
     truncated: (reason: string, maxOutputTokens: number) =>
       reason === 'max_output_tokens'
         ? `출력 상한(${maxOutputTokens.toLocaleString('ko-KR')} 토큰)에 걸려 응답이 중간에 끊겼습니다.`
-        : `응답이 끝까지 생성되지 않았습니다 (사유: ${reason}).`,
+        : '응답이 끝까지 생성되지 않았습니다.',
     meta: {
       model: '모델',
       responseId: '응답 ID',
@@ -92,8 +93,9 @@ export const copy = {
       elapsed: (ms: number) => `${(ms / 1000).toFixed(1)}초`,
     },
     retry: '다시 시도',
+    retryPerspective: '현재 입력과 선택한 감평 관점으로 다시 시도합니다.',
+    perspective: (label: string) => `적용한 감평 관점 · ${label}`,
     inputKept: '입력한 원고와 등록한 키는 그대로 있습니다.',
-    serverMessage: 'OpenAI 메시지',
     httpStatus: 'HTTP 상태',
   },
 
@@ -106,7 +108,7 @@ export const copy = {
     },
     permission: {
       title: '권한 없음',
-      guide: '이 키나 프로젝트로는 설정된 모델을 쓸 수 없거나, 지원하지 않는 지역일 수 있습니다. OpenAI 메시지를 확인하세요.',
+      guide: 'OpenAI 프로젝트에서 설정된 모델의 사용 권한과 지원 지역을 확인하세요.',
     },
     not_found: {
       title: '모델을 찾을 수 없음',
@@ -114,7 +116,7 @@ export const copy = {
     },
     bad_request: {
       title: '요청 오류',
-      guide: '원고가 모델 한도보다 길거나 요청 형식이 맞지 않습니다. OpenAI 메시지를 확인하세요.',
+      guide: '원고를 줄여 다시 시도하세요. 계속 실패하면 개발 담당에게 화면의 오류 제목과 HTTP 상태를 알려 주세요.',
     },
     quota: {
       title: '할당량 부족',
@@ -135,7 +137,7 @@ export const copy = {
       title: '빈 응답',
       guide: 'OpenAI가 텍스트 없이 응답했습니다. 다시 시도하세요.',
     },
-    refusal: { title: '모델이 감평을 거절함', guide: '모델이 이 원고에 대한 응답을 거절했습니다. 아래 사유를 확인하세요.' },
+    refusal: { title: '모델이 감평을 거절함', guide: '이 요청에는 감평이 생성되지 않았습니다. 다른 구간으로 다시 시도할 수 있습니다.' },
     response_failed: { title: '응답 생성 실패', guide: 'OpenAI가 응답 생성에 실패했다고 알려 왔습니다. 다시 시도하세요.' },
     unexpected: { title: '예상하지 못한 응답', guide: '응답 형식을 해석하지 못했습니다. 다시 시도하세요.' },
   } satisfies Record<ReviewErrorKind, { title: string; guide: string }>,

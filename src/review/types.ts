@@ -40,12 +40,8 @@ export type ReviewErrorKind =
 export interface ReviewErrorDetails {
   /** HTTP 상태 코드 (응답을 받은 경우). */
   status?: number;
-  /** OpenAI가 돌려준 오류 메시지·거절 사유 (화면 표시용, 최대 500자). */
-  serverMessage?: string;
-  /** OpenAI 오류 code 또는 type. */
-  serverCode?: string;
-  /** 빈 응답일 때 OpenAI가 알려 준 미완료 사유. */
-  incompleteReason?: string;
+  /** 빈 응답에서 표시할 수 있는 OpenAI 미완료 사유. */
+  incompleteReason?: 'max_output_tokens' | 'content_filter';
   /** invalid_input일 때 원인. */
   inputProblem?: 'empty' | 'too_long';
 }

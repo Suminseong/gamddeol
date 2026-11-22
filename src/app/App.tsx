@@ -1,4 +1,5 @@
 import { useState, useSyncExternalStore } from 'react';
+import { DEFAULT_REVIEW_PERSPECTIVE, type ReviewPerspective } from '../review/perspectives';
 import type { ReviewService } from '../review/reviewService';
 import { checkManuscript } from '../review/validate';
 import type { KeySession } from '../session/keySession';
@@ -26,6 +27,7 @@ const REPOSITORY_URL = 'https://github.com/Suminseong/gamddeol';
 export function App({ service, keySession, buildId, mockTransport = null }: AppProps) {
   const hasKey = useSyncExternalStore(keySession.subscribe, keySession.has, keySession.has);
   const [manuscript, setManuscript] = useState('');
+  const [perspective, setPerspective] = useState<ReviewPerspective>(DEFAULT_REVIEW_PERSPECTIVE);
   const { state, run, cancel } = useReviewRunner(service, keySession);
 
   const running = state.phase === 'running';
@@ -39,7 +41,7 @@ export function App({ service, keySession, buildId, mockTransport = null }: AppP
         : null;
 
   const startRun = () => {
-    if (blocker === null) void run(manuscript);
+    if (blocker === null) void run(manuscript, perspective);
   };
 
   return (
@@ -62,7 +64,14 @@ export function App({ service, keySession, buildId, mockTransport = null }: AppP
             maxChars={service.config.maxInputChars}
             check={manuscriptCheck}
           />
-          <RunPanel config={service.config} blocker={blocker} onRun={startRun} onCancel={cancel} />
+          <RunPanel
+            config={service.config}
+            blocker={blocker}
+            perspective={perspective}
+            onPerspectiveChange={setPerspective}
+            onRun={startRun}
+            onCancel={cancel}
+          />
         </div>
         <div className="app-column">
           <ResultPanel
