@@ -6,6 +6,7 @@
 - **상태:** `tokens/`의 파일은 받은 원본 그대로 보관한다. 수정은 Gemini 사양 갱신을 거쳐 새 버전으로 교체한다.
   - 개인 검증용 알파([../alpha/README.md](../alpha/README.md))가 `design-tokens.css`를 그대로 불러와 CSS 변수와 `.neu-cta-button`, `.flat-reader-surface`, `.flat-reader-column`을 쓴다. 반응형 기준은 1200px / 768px을 따른다.
   - 알파 화면 문구는 개발 담당이 쓴 초안이다. UX 라이팅 검토가 필요하다.
+  - 알파는 컨트롤 경계(입력·원고·선택·보조 버튼)에만 앱 범위 변수 `--app-control-border`(라이트 `#8A8579`, 다크 `#737882`, Gemini 권장값)를 `src/app/app.css`에 따로 둔다. 원본 `--color-border-strong`이 면 위에서 3:1에 못 미치기 때문이다. `tokens/` 파일은 바꾸지 않았고, 원본에 정식 토큰이 생기면 그것으로 바꾼다. 근거와 실측 값은 [../alpha/README.md](../alpha/README.md)의 "컨트롤 경계색".
   - 본 제품 프레임워크는 아직 승인되지 않았다(D01–D07 대기).
 
 ## 파일
