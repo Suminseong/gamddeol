@@ -122,6 +122,10 @@ jobs:
         env:
           PROBE_OUTCOME: ${{ steps.probe.outcome }}
         run: |
+          if [ -f test-results/openai-probe.json ]; then
+            echo "OpenAI 브라우저 호출 확인 결과:"
+            cat test-results/openai-probe.json
+          fi
           {
             echo "## GitHub Pages 검증"
             echo ""
