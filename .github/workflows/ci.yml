@@ -32,3 +32,21 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run e2e
+
+  # 머지 전에 Pages 소스 설정을 알려 준다. 검사 결과에는 영향을 주지 않는다.
+  pages-source:
+    name: Pages 소스 확인 (정보)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pages: read
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          build_type="$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .build_type 2>/dev/null || echo unknown)"
+          echo "Pages build_type: $build_type"
+          echo "- GitHub Pages 소스(build_type): \`$build_type\`" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$build_type" != "workflow" ]; then
+            echo "::warning::GitHub Pages 소스가 GitHub Actions가 아닙니다 (build_type=$build_type). main에 머지해도 Pages 워크플로가 배포하지 않습니다. Settings → Pages에서 Source를 GitHub Actions로 바꾸세요."
+          fi

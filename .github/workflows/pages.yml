@@ -35,6 +35,18 @@ jobs:
       - run: npm run build
         env:
           GAMDDEOL_BUILD_ID: ${{ github.sha }}
+      # 저장소 설정의 Pages 소스가 "GitHub Actions"여야 이 워크플로가 배포한다.
+      # "Deploy from a branch"이면 저장소 루트가 그대로 게시되므로 여기서 멈추고 고칠 곳을 알린다.
+      - name: Check Pages source is GitHub Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          build_type="$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .build_type)"
+          echo "Pages build_type: $build_type"
+          if [ "$build_type" != "workflow" ]; then
+            echo "::error::GitHub Pages 소스가 GitHub Actions가 아닙니다 (build_type=$build_type). Settings → Pages → Build and deployment → Source를 GitHub Actions로 바꾼 뒤 이 워크플로를 다시 실행하세요."
+            exit 1
+          fi
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:

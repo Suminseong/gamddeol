@@ -156,9 +156,11 @@ E2E를 처음 돌릴 때는 `npx playwright install chromium`으로 브라우저
 
 비밀값을 쓰지 않는다. 저장소 Secrets도 쓰지 않는다.
 
+저장소 설정 **Settings → Pages → Build and deployment**의 Source가 **GitHub Actions**여야 한다. "Deploy from a branch"이면 저장소 루트가 그대로 게시되어 앱이 열리지 않는다. 이때는 build 잡이 배포 전에 멈추고 고칠 곳을 알린다. PR CI도 같은 설정을 확인해 경고로 알려 준다.
+
 1. **PR**: [CI](../../.github/workflows/ci.yml)가 타입 검사, 단위·통합 테스트, 빌드와 배포 파일 검사, E2E를 돌린다.
 2. **main에 머지**: [Pages](../../.github/workflows/pages.yml)가 다음 순서로 돈다.
-   - **build:** 검사 후 빌드한다. 빌드 ID는 커밋 SHA이고 페이지 meta와 바닥글에 들어간다.
+   - **build:** 검사 후 빌드한다. Pages 소스 설정을 확인한다. 빌드 ID는 커밋 SHA이고 페이지 meta와 바닥글에 들어간다.
    - **deploy:** GitHub Pages에 올린다.
    - **verify:** 배포 주소를 검증한다.
      - 배포 주소가 이번 빌드를 내보낼 때까지 기다린다.
