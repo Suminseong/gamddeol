@@ -4,9 +4,11 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { createAiRunner } from '../ai/aiRunner';
 import { createWorkspaceStore } from '../domain/store';
 import { REVIEW_CONFIG } from '../review/config';
+import { REVIEW_PERSPECTIVES } from '../review/perspectives';
 import { createReviewService } from '../review/reviewService';
 import { createMemoryRouter } from '../router/router';
 import { createKeySession } from '../session/keySession';
+import { FAKE_API_KEY, UI_CHECK_TEXT } from '../testing/fixtures';
 import { createMockTransport } from '../transport/mockTransport';
 import { App } from './App';
 import type { AppServices } from './context';
@@ -36,7 +38,7 @@ function setup(initial = '/') {
   };
   render(<App services={services} />);
   const go = (to: string) => act(() => router.navigate(to, { force: true }));
-  return { store, router, go, user: userEvent.setup() };
+  return { store, router, go, transport, keySession, user: userEvent.setup() };
 }
 
 const h1 = () => screen.getAllByRole('heading', { level: 1 });
@@ -96,5 +98,33 @@ describe('앱 쉘·라우팅', () => {
     await user.type(screen.getByLabelText('검색어'), '확인어{Enter}');
     expect(router.entries.join('\n')).not.toContain('확인어');
     expect(router.entries.join('\n')).not.toContain(encodeURIComponent('확인어'));
+  });
+
+  it('판본의 감평 관점을 바꿔 실행하면 선택한 지시를 모의 전송에 한 번만 보낸다', async () => {
+    const { store, go, transport, keySession, user } = setup();
+    const work = makeWork(store, '확인용 작품');
+    const [item] = await store.importChapters(work.id, [
+      { commandId: 'cmd-version-review', displayNumber: '1', title: null, source: { rawBytes: null, rawText: UI_CHECK_TEXT, sourceType: 'paste', fileName: null, encoding: 'utf-8' } },
+    ]);
+    if (!item!.result.ok) throw item!.result.error;
+    keySession.set(FAKE_API_KEY);
+    const consent = store.grantConsent(['manuscript_review'], REVIEW_CONFIG.model);
+    if (!consent.ok) throw consent.error;
+    const { chapterId, versionId } = item!.result.value;
+    await go(`/works/${work.id}/chapters/${chapterId}/versions/${versionId}`);
+
+    const selected = screen.getByRole<HTMLInputElement>('radio', { name: '전개·몰입' });
+    await user.click(selected);
+    expect(selected.checked).toBe(true);
+    expect(screen.getByText(REVIEW_PERSPECTIVES.pacing.description)).toBeTruthy();
+    expect(transport.calls).toHaveLength(0);
+    await user.click(screen.getByRole('button', { name: '감평 실행' }));
+    await screen.findByRole('region', { name: '감평 결과 본문' });
+    expect(transport.calls).toHaveLength(1);
+    const body = transport.calls[0]!.body as { instructions: string; input: string; store: boolean };
+    expect(body.instructions).toContain(REVIEW_PERSPECTIVES.pacing.instructions);
+    expect(body.input).toBe(UI_CHECK_TEXT);
+    expect(body.store).toBe(false);
+    expect(Object.values(store.getState().reviews)[0]?.perspective).toBe('pacing');
   });
 });

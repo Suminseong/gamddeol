@@ -3,7 +3,7 @@
  * 보내기 전에 키와 전송 동의(자료 종류·모델)를 확인하고, 실행 중에는 취소할 수 있다.
  * 결과는 참고용·후보이며 설정을 바꾸지 않는다. 실패하면 원고·키는 그대로 두고 다시 시도할 수 있다.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { parseErrorCode, type AiGateProblem } from '../../ai/aiRunner';
 import { AI_JOB_STATUS_LABELS, formatDateTime } from '../../domain/labels';
 import type { AiDataKind, AiJob, AiJobType } from '../../domain/types';
@@ -13,7 +13,8 @@ import { OPENAI_RESPONSES_ENDPOINT } from '../../transport/endpoint';
 import { copy } from '../copy';
 import { Link, useHasKey, useServices, useWorkspace } from '../context';
 import { pathFor } from '../../router/routes';
-import { Badge, ErrorBanner, InfoBanner, LiveStatus, Panel, SelectField } from '../ui/primitives';
+import { Badge, ErrorBanner, InfoBanner, LiveStatus, Panel } from '../ui/primitives';
+import '../quick/segmented.css';
 
 export function gateMessage(problem: AiGateProblem, maxChars: number): string {
   switch (problem) {
@@ -109,6 +110,7 @@ export function VersionReviewPanel({ workId, versionId }: { workId: string; vers
   useHasKey();
   const version = workspace.versions[versionId]!;
   const [perspective, setPerspective] = useState<ReviewPerspective>('general');
+  const perspectiveId = useId();
   const [starting, setStarting] = useState(false);
   const [announce, setAnnounce] = useState('');
   const jobs = useJobs(versionId, 'manuscript_review');
@@ -138,14 +140,27 @@ export function VersionReviewPanel({ workId, versionId }: { workId: string; vers
     <Panel title="단일 감평 (AI 참고용)" headingLevel={3} className="ai-panel">
       <LiveStatus message={announce} />
       {problem && <GateNotice problem={problem} kind="manuscript_review" />}
-      <SelectField
-        label="감평 관점"
-        value={perspective}
-        onChange={setPerspective}
-        disabled={busy}
-        options={(Object.keys(REVIEW_PERSPECTIVES) as ReviewPerspective[]).map((key) => ({ value: key, label: REVIEW_PERSPECTIVES[key].label }))}
-        hint={REVIEW_PERSPECTIVES[perspective].description}
-      />
+      <fieldset className="review-perspective perspective-fieldset" aria-describedby={`${perspectiveId}-description`}>
+        <legend>감평 관점</legend>
+        <div className="perspective-segments">
+          {(Object.keys(REVIEW_PERSPECTIVES) as ReviewPerspective[]).map((key) => (
+            <label className="perspective-option" key={key}>
+              <input
+                type="radio"
+                name={`${perspectiveId}-perspective`}
+                value={key}
+                checked={perspective === key}
+                disabled={busy}
+                onChange={() => setPerspective(key)}
+              />
+              <span className="perspective-option-surface">{REVIEW_PERSPECTIVES[key].label}</span>
+            </label>
+          ))}
+        </div>
+        <p id={`${perspectiveId}-description`} className="hint perspective-description">
+          {REVIEW_PERSPECTIVES[perspective].description}
+        </p>
+      </fieldset>
       <SendDisclosure what={`이 판본(v${version.versionOrdinal}) 본문과 감평 지시(관점 「${REVIEW_PERSPECTIVES[perspective].label}」) → 요청 본문`} />
       <div className="run-actions">
         <button type="button" className="button-primary" disabled={Boolean(problem) || busy} aria-busy={busy} onClick={() => void run()}>

@@ -1,0 +1,84 @@
+/* 네이티브 라디오의 방향키·스크린리더 동작을 유지하는 관점 선택 */
+.perspective-fieldset {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+
+.perspective-fieldset legend {
+  padding: 0;
+  margin-bottom: var(--space-2);
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
+.perspective-segments {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: 18px;
+  background: var(--neu-bg, var(--color-canvas-primary));
+  box-shadow: var(--neu-inset, none);
+}
+
+.perspective-option {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.perspective-option input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 44px;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.perspective-option-surface {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px;
+  border: 1px solid var(--color-border-control);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-elevated);
+  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.perspective-option input:checked + .perspective-option-surface {
+  border-color: var(--color-accent-primary);
+  background: var(--neu-bg, var(--color-accent-primary-soft));
+  color: var(--color-text-primary);
+  font-weight: 700;
+  box-shadow: var(--neu-raised-small), inset 0 -3px 0 var(--color-accent-primary);
+}
+
+.perspective-option input:focus-visible + .perspective-option-surface {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 2px;
+}
+
+.perspective-option input:disabled { cursor: not-allowed; }
+.perspective-option input:disabled + .perspective-option-surface { background: var(--neu-disabled-surface, var(--color-canvas-secondary)); }
+.perspective-option input:disabled:checked + .perspective-option-surface { box-shadow: inset 0 -3px 0 var(--color-accent-primary); }
+
+@media (forced-colors: active) {
+  .perspective-option input:checked + .perspective-option-surface { border: 3px solid Highlight; }
+  .perspective-option input:focus-visible + .perspective-option-surface { outline-color: Highlight; }
+}
+
+@media (max-width: 360px) {
+  .perspective-segments { grid-template-columns: 1fr; }
+}

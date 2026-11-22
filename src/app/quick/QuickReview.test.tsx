@@ -112,8 +112,7 @@ describe('QuickReview (알파 빠른 감평)', () => {
     await registerKey(user);
     await typeManuscript(user);
 
-    const selector = screen.getByRole('combobox', { name: '감평 관점' });
-    await user.selectOptions(selector, 'pacing');
+    await user.click(screen.getByRole('radio', { name: '전개·몰입' }));
     expect(transport.calls).toHaveLength(0);
     await user.click(runButton());
 
@@ -125,7 +124,7 @@ describe('QuickReview (알파 빠른 감평)', () => {
       instructions: expect.stringContaining(`${REVIEW_CONFIG.instructions}\n\n전개 속도`),
     });
 
-    await user.selectOptions(selector, 'coherence');
+    await user.click(screen.getByRole('radio', { name: '인물·설정 일관성' }));
     expect(screen.getByText('적용한 감평 관점 · 전개·몰입')).toBeTruthy();
     expect(transport.calls).toHaveLength(1);
     await user.click(runButton());
@@ -152,10 +151,10 @@ describe('QuickReview (알파 빠른 감평)', () => {
     const disclosure = document.getElementById('send-disclosure');
     expect(disclosure?.textContent).toContain('감평 지시(기본 지시 + 선택한 관점 「일반 감평」) → 요청 본문');
 
-    const selector = screen.getByRole<HTMLSelectElement>('combobox', { name: '감평 관점' });
-    await user.selectOptions(selector, 'coherence');
+    const group = screen.getByRole('group', { name: '감평 관점' });
+    await user.click(screen.getByRole('radio', { name: '인물·설정 일관성' }));
     expect(disclosure?.textContent).toContain('선택한 관점 「인물·설정 일관성」');
-    const describedBy = selector.getAttribute('aria-describedby')?.split(' ') ?? [];
+    const describedBy = group.getAttribute('aria-describedby')?.split(' ') ?? [];
     const description = describedBy.map((id) => document.getElementById(id)?.textContent ?? '').join(' ');
     expect(description).toMatch(/인물의 행동·동기/);
     expect(description).toMatch(/다음 실행부터 적용/);
@@ -169,12 +168,12 @@ describe('QuickReview (알파 빠른 감평)', () => {
     expect(await screen.findByText('적용한 감평 관점 · 일반 감평')).toBeTruthy();
     expect(screen.queryByText(/이 결과에 반영되지 않았습니다/)).toBeNull();
 
-    await user.selectOptions(screen.getByRole('combobox', { name: '감평 관점' }), 'pacing');
+    await user.click(screen.getByRole('radio', { name: '전개·몰입' }));
     expect(screen.getByText('적용한 감평 관점 · 일반 감평')).toBeTruthy();
     expect(screen.getByText(/「전개·몰입」은 이 결과에 반영되지 않았습니다. 다음 감평 실행에 적용됩니다./)).toBeTruthy();
     expect(transport.calls).toHaveLength(1);
 
-    await user.selectOptions(screen.getByRole('combobox', { name: '감평 관점' }), 'general');
+    await user.click(screen.getByRole('radio', { name: '일반 감평' }));
     expect(screen.queryByText(/이 결과에 반영되지 않았습니다/)).toBeNull();
   });
 
