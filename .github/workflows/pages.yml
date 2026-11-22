@@ -1,0 +1,137 @@
+# main에 들어오면: 검사·빌드 → GitHub Pages 배포 → 배포된 프로젝트 경로에서 검증.
+# 비밀값을 쓰지 않는다. 검증에는 가짜 키와 짧은 UI 검사 문자열, 네트워크 모의 응답만 쓴다.
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+        env:
+          GAMDDEOL_BUILD_ID: ${{ github.sha }}
+      # 저장소 설정의 Pages 소스가 "GitHub Actions"여야 이 워크플로가 배포한다.
+      # "Deploy from a branch"이면 저장소 루트가 그대로 게시되므로 여기서 멈추고 고칠 곳을 알린다.
+      - name: Check Pages source is GitHub Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          build_type="$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .build_type)"
+          echo "Pages build_type: $build_type"
+          if [ "$build_type" != "workflow" ]; then
+            echo "::error::GitHub Pages 소스가 GitHub Actions가 아닙니다 (build_type=$build_type). Settings → Pages → Build and deployment → Source를 GitHub Actions로 바꾼 뒤 이 워크플로를 다시 실행하세요."
+            exit 1
+          fi
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  verify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+      BUILD_ID: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      - name: Wait until GitHub Pages serves this build
+        run: |
+          for attempt in $(seq 1 30); do
+            html="$(curl -fsS --max-time 20 "$PAGE_URL" || true)"
+            if grep -qF "name=\"gamddeol-build\" content=\"$BUILD_ID\"" <<<"$html"; then
+              echo "Pages serves build $BUILD_ID (attempt $attempt)"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "GitHub Pages did not serve build $BUILD_ID in time" >&2
+          exit 1
+
+      - name: E2E on GitHub Pages (OpenAI responses are network mocks)
+        env:
+          E2E_BASE_URL: ${{ env.PAGE_URL }}
+          E2E_EXPECT_BUILD_ID: ${{ env.BUILD_ID }}
+        run: npx playwright test e2e/static.spec.ts e2e/flow.spec.ts
+
+      # 실제 OpenAI 엔드포인트에 가짜 키로 요청해 브라우저 직접 호출(CORS)이 막히지 않는지 기록한다.
+      # OpenAI 쪽 정책 변화로 실패할 수 있으므로 배포 자체를 실패로 만들지는 않는다.
+      - name: OpenAI browser-call probe (fake key)
+        id: probe
+        continue-on-error: true
+        env:
+          E2E_BASE_URL: ${{ env.PAGE_URL }}
+          OPENAI_PROBE: '1'
+        run: npx playwright test e2e/openai-probe.spec.ts
+
+      - name: Summary
+        if: always()
+        env:
+          PROBE_OUTCOME: ${{ steps.probe.outcome }}
+        run: |
+          {
+            echo "## GitHub Pages 검증"
+            echo ""
+            echo "- 주소: $PAGE_URL"
+            echo "- 빌드: $BUILD_ID"
+            echo "- OpenAI 브라우저 호출 확인(가짜 키): $PROBE_OUTCOME"
+            if [ -f test-results/openai-probe.json ]; then
+              echo ""
+              echo '```json'
+              cat test-results/openai-probe.json
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

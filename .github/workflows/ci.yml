@@ -1,0 +1,52 @@
+# PR 검사: 타입 검사 · 단위/통합 테스트 · 배포 빌드(dist 검사 포함) · E2E(로컬 /gamddeol/ 경로, 네트워크 모의).
+# 비밀값을 쓰지 않는다. 실제 키·원고 없이 돈다.
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: typecheck · test · build · e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e
+
+  # 머지 전에 Pages 소스 설정을 알려 준다. 검사 결과에는 영향을 주지 않는다.
+  pages-source:
+    name: Pages 소스 확인 (정보)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pages: read
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          build_type="$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .build_type 2>/dev/null || echo unknown)"
+          echo "Pages build_type: $build_type"
+          echo "- GitHub Pages 소스(build_type): \`$build_type\`" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$build_type" != "workflow" ]; then
+            echo "::warning::GitHub Pages 소스가 GitHub Actions가 아닙니다 (build_type=$build_type). main에 머지해도 Pages 워크플로가 배포하지 않습니다. Settings → Pages에서 Source를 GitHub Actions로 바꾸세요."
+          fi

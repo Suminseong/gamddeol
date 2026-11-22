@@ -24,3 +24,13 @@ logs/
 # Test manuscripts (원고는 저작권·유출 위험이 있으므로 저장소에 올리지 않는다)
 manuscripts/
 samples/private/
+
+# Node / build / test output
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+test-results/
+playwright-report/
+blob-report/
+coverage/

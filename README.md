@@ -8,9 +8,24 @@
 
 ## 현재 상태
 
-- **단계:** 기획·기술 검토. 기술 스택과 MVP 범위는 아직 승인되지 않았다.
-- **코드:** 없음. 착수 전 결정 사항(D01–D07)이 승인된 뒤 추가한다.
+- **단계:** 개인 검증용 알파. 2026-11-22 참깨빙수가 알파 구현과 GitHub Pages 배포를 승인했다.
+- **알파 주소:** https://suminseong.github.io/gamddeol/
+  - 브라우저에서 OpenAI API 키를 등록하고, 원고를 평문으로 넣어 감평 응답을 확인한다.
+  - 쓰는 법, 전송 범위, 한계는 [docs/alpha/README.md](docs/alpha/README.md)를 본다.
+- **본 제품:** 기술 스택과 MVP 범위(D01–D07)는 아직 승인되지 않았다. 알파 스택(Vite + React + TypeScript)은 알파에만 쓰는 선택이다.
 - 진행 상황과 결정 대기 목록은 [docs/decisions.md](docs/decisions.md)를 본다.
+
+## 개발
+
+Node 22(`.nvmrc`)가 필요하다. 실제 키나 원고 없이 빌드·테스트가 돈다.
+
+```sh
+npm ci
+npm run dev:mock   # 네트워크 없는 모의 모드
+npm run check      # 타입 검사 · 테스트 · 빌드(배포 파일 검사) · E2E
+```
+
+명령 전체와 배포 흐름은 [docs/alpha/README.md](docs/alpha/README.md#명령)에 있다.
 
 ## 역할
 
@@ -27,6 +42,7 @@
 
 | 문서 | 내용 |
 |---|---|
+| [docs/alpha/README.md](docs/alpha/README.md) | 개인 검증용 알파: 쓰는 법, 전송 범위, 구조, 명령, 배포 |
 | [docs/overview.md](docs/overview.md) | 사업계획서 초안 v0.1 요약 |
 | [docs/decisions.md](docs/decisions.md) | 착수 전 결정 대기 목록과 기술 검토에서 나온 미결 질문 |
 | [docs/reviews/tech-review-claude-v0.1.md](docs/reviews/tech-review-claude-v0.1.md) | 개발 담당 기술 검토 의견서 v0.1 (사본) |
