@@ -46,6 +46,7 @@ npm run check      # 타입 검사 · 테스트 · 빌드(배포 파일 검사) 
 | [docs/overview.md](docs/overview.md) | 사업계획서 초안 v0.1 요약 |
 | [docs/decisions.md](docs/decisions.md) | 착수 전 결정 대기 목록과 기술 검토에서 나온 미결 질문 |
 | [docs/reviews/tech-review-claude-v0.1.md](docs/reviews/tech-review-claude-v0.1.md) | 개발 담당 기술 검토 의견서 v0.1 (사본) |
+| [docs/reviews/t01-t08-claude-response-v0.1.md](docs/reviews/t01-t08-claude-response-v0.1.md) | GPT 쟁점 T01–T08에 대한 개발 담당 답변 v0.1 (검토 대기) |
 | [docs/design/](docs/design/README.md) | 디자인 시스템 v0.2 토큰 원본 보관 (사양서 원본은 Gemini의 Google Docs) |
 
 ## 원본 자료 위치
