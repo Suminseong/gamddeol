@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../docs/design/tokens/design-tokens.css';
 import './app/app.css';
+import './app/refinement.css';
 import { createAiRunner } from './ai/aiRunner';
 import { App } from './app/App';
 import type { AppServices } from './app/context';
