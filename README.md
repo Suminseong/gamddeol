@@ -13,6 +13,7 @@
   - 브라우저에서 OpenAI API 키를 등록하고, 원고를 평문으로 넣어 감평 응답을 확인한다.
   - 쓰는 법, 전송 범위, 한계는 [docs/alpha/README.md](docs/alpha/README.md)를 본다.
 - **본 제품:** 기술 스택과 MVP 범위(D01–D07)는 아직 승인되지 않았다. 알파 스택(Vite + React + TypeScript)은 알파에만 쓰는 선택이다.
+- **실험:** 가상 독자 계산 PoC([experiments/virtual-readers](experiments/virtual-readers/README.md)). 원고·외부 API 없이 검증 계획의 V10 예제를 재현한다. 알파와 분리돼 있고 D06은 대기다.
 - 진행 상황과 결정 대기 목록은 [docs/decisions.md](docs/decisions.md)를 본다.
 
 ## 개발
@@ -25,7 +26,7 @@ npm run dev:mock   # 네트워크 없는 모의 모드
 npm run check      # 타입 검사 · 테스트 · 빌드(배포 파일 검사) · E2E
 ```
 
-명령 전체와 배포 흐름은 [docs/alpha/README.md](docs/alpha/README.md#명령)에 있다.
+명령 전체와 배포 흐름은 [docs/alpha/README.md](docs/alpha/README.md#명령)에 있다. 실험 검사는 `npm run check:experiments`로 따로 돈다.
 
 ## 역할
 
@@ -45,6 +46,7 @@ npm run check      # 타입 검사 · 테스트 · 빌드(배포 파일 검사) 
 | [docs/alpha/README.md](docs/alpha/README.md) | 개인 검증용 알파: 쓰는 법, 전송 범위, 구조, 명령, 배포 |
 | [docs/overview.md](docs/overview.md) | 사업계획서 초안 v0.1 요약 |
 | [docs/decisions.md](docs/decisions.md) | 착수 전 결정 대기 목록과 기술 검토에서 나온 미결 질문 |
+| [experiments/virtual-readers/README.md](experiments/virtual-readers/README.md) | 가상 독자 계산 PoC (실험): 결과, 검증, 미해결 계산 가정 |
 | [docs/reviews/tech-review-claude-v0.1.md](docs/reviews/tech-review-claude-v0.1.md) | 개발 담당 기술 검토 의견서 v0.1 (사본) |
 | [docs/reviews/t01-t08-claude-response-v0.1.md](docs/reviews/t01-t08-claude-response-v0.1.md) | GPT 쟁점 T01–T08에 대한 개발 담당 답변 v0.1 (검토 대기) |
 | [docs/design/](docs/design/README.md) | 디자인 시스템 v0.2 토큰 원본 보관 (사양서 원본은 Gemini의 Google Docs) |
