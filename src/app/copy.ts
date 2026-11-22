@@ -49,9 +49,11 @@ export const copy = {
 
   run: {
     perspective: '감평 관점',
-    disclosureLead: '감평 실행을 누를 때만, 아래 두 가지를 OpenAI 공식 엔드포인트 한 곳으로 보냅니다.',
+    perspectiveTiming: '관점은 감평 실행을 누르는 순간의 선택이 그 요청에 적용됩니다. 결과를 받은 뒤 바꾸면 다음 실행부터 적용됩니다.',
+    disclosureLead: '감평 실행을 누를 때만, 아래 내용을 OpenAI 공식 엔드포인트 한 곳으로 보냅니다.',
     sendKey: 'API 키 → Authorization 헤더',
     sendManuscript: '지금 입력한 원고 본문 → 요청 본문',
+    sendInstructions: (label: string) => `감평 지시(기본 지시 + 선택한 관점 「${label}」) → 요청 본문`,
     disclosureTail:
       '키 등록만으로는 아무것도 보내지 않습니다. 다른 서버·분석 도구·외부 스크립트에는 연결하지 않습니다. 키·원고·결과는 이 탭 메모리에만 있고 새로고침하면 사라집니다. OpenAI에는 응답을 저장하지 말라고(store: false) 요청합니다.',
     params: (model: string, effort: string | null, maxOutputTokens: number, timeoutMs: number) =>
@@ -75,9 +77,12 @@ export const copy = {
 
   result: {
     heading: '감평 결과',
-    empty: '아직 결과가 없습니다. 키를 등록하고 원고를 넣은 뒤 감평 실행을 누르세요.',
+    empty: '아직 결과가 없습니다. 원고를 넣고 감평 관점을 고른 뒤 감평 실행을 누르세요.',
     emptyNoKey: '키가 없으면 감평을 실행할 수 없습니다. 원고 입력은 키 없이도 할 수 있습니다.',
-    waiting: (seconds: number) => `OpenAI 응답을 기다리는 중… ${seconds}초`,
+    waiting: 'OpenAI 응답을 기다리는 중입니다.',
+    elapsed: (seconds: number) => `${seconds}초`,
+    bodyLabel: '감평 결과 본문',
+    bodyHint: '본문이 길면 이 영역에 초점을 두고 방향키나 Page Down 키로 스크롤할 수 있습니다.',
     badgeOpenAI: 'OpenAI 응답',
     badgeMock: '모의 응답 · 네트워크 미사용',
     aiNote: 'AI 감평은 참고용입니다. 작품 설정이나 원고에 자동으로 반영되지 않습니다.',
@@ -93,8 +98,10 @@ export const copy = {
       elapsed: (ms: number) => `${(ms / 1000).toFixed(1)}초`,
     },
     retry: '다시 시도',
-    retryPerspective: '현재 입력과 선택한 감평 관점으로 다시 시도합니다.',
+    retryPerspective: (label: string) => `다시 시도하면 현재 입력과 지금 선택한 관점 「${label}」으로 보냅니다.`,
     perspective: (label: string) => `적용한 감평 관점 · ${label}`,
+    perspectiveChanged: (label: string) =>
+      `지금 선택한 관점 「${label}」은 이 결과에 반영되지 않았습니다. 다음 감평 실행에 적용됩니다.`,
     inputKept: '입력한 원고와 등록한 키는 그대로 있습니다.',
     httpStatus: 'HTTP 상태',
   },

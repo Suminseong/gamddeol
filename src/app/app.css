@@ -3,6 +3,11 @@
  * 색·간격·글꼴은 Gemini 디자인 토큰 v0.2(docs/design/tokens/design-tokens.css)의 CSS 변수만 쓴다.
  * 반응형 기준은 디자인 사양의 1200px / 768px.
  * 웹 글꼴은 외부에서 불러오지 않는다(토큰의 글꼴 목록 중 기기에 있는 것을 쓴다).
+ *
+ * 글자 대비(WCAG 2.2 AA 4.5:1) 메모 — 토큰 값으로 계산, 큰 글자 아님 기준:
+ * --color-text-muted는 면(surface) 위에서 라이트 2.79:1, 다크 2.78:1이라 읽어야 하는 글자에 쓰지 않는다.
+ * 대신 --color-text-secondary(라이트 5.59:1, 다크 5.57:1)를 쓴다. 비활성 버튼 글자는 기준 예외라 그대로 둔다.
+ * --status-candidate-fg/bg 라이트 4.17:1, --status-warning-fg/bg 라이트 3.30:1도 미달이라 글자색으로 쓰지 않는다.
  */
 
 *,
@@ -124,7 +129,7 @@ a:hover {
 .notice h2 {
   margin: 0 0 var(--space-2);
   font-size: var(--text-md);
-  color: var(--status-warning-fg);
+  color: var(--color-text-primary);
 }
 
 .notice p,
@@ -199,7 +204,7 @@ a:hover {
 }
 
 .counter {
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
   font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
 }
@@ -341,6 +346,13 @@ button:disabled {
   gap: var(--space-3);
   margin: 0;
   color: var(--color-text-secondary);
+}
+
+.waiting-text {
+  margin: 0;
+}
+
+.waiting-elapsed {
   font-variant-numeric: tabular-nums;
 }
 
@@ -385,7 +397,7 @@ button:disabled {
 .badge-ai {
   background: var(--status-candidate-bg);
   border-color: var(--status-candidate-border);
-  color: var(--status-candidate-fg);
+  color: var(--color-text-primary);
 }
 
 .badge-mock {
@@ -395,7 +407,7 @@ button:disabled {
 }
 
 .result-meta {
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
   font-size: var(--text-xs);
   word-break: break-all;
 }
@@ -419,6 +431,22 @@ button:disabled {
   padding: var(--space-6) var(--space-4);
   max-height: 70vh;
   overflow: auto;
+}
+
+.result-text:focus-visible {
+  outline-offset: -2px;
+}
+
+.perspective-changed {
+  margin: 0 0 var(--space-3);
+}
+
+.perspective-description {
+  margin: 0;
+}
+
+.review-perspective .hint {
+  margin: 0;
 }
 
 .result-text .flat-reader-column {
@@ -451,7 +479,7 @@ button:disabled {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
   font-size: var(--text-xs);
 }
 
@@ -485,5 +513,22 @@ button:disabled {
 
   .run-button {
     flex: 1 1 100%;
+  }
+}
+
+/*
+ * 터치 기기·좁은 화면: 입력 글자를 16px 이상으로 두어 iOS Safari의 입력 시 자동 확대를 막고,
+ * 입력·보조 버튼·실행 버튼을 같은 44px 높이로 맞춘다.
+ */
+@media (max-width: 767px), (pointer: coarse) {
+  /* 원고 입력칸은 리더 글자 크기(17px)를 그대로 쓴다. */
+  .text-input {
+    font-size: max(16px, var(--text-base));
+  }
+
+  .text-input,
+  .button-secondary,
+  .neu-cta-button {
+    min-height: 44px;
   }
 }
