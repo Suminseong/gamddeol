@@ -14,9 +14,12 @@ import {
 /**
  * 실제 OpenAI 엔드포인트에 가짜 키로 요청해, 브라우저 직접 호출이 CORS로 막히지 않는지 확인한다.
  * - 보내는 값: 가짜 키(Authorization 헤더)와 짧은 UI 검사 문자열뿐이다.
- * - 기대 결과: OpenAI가 401을 돌려주고 화면에 "인증 실패 (401)"이 보인다 (= CORS 통과).
- * - 막히면 원인을 가리기 위해, 같은 요청을 브라우저 밖(Node)에서 다시 보내 응답 상태와 CORS 헤더를 기록한다.
+ * - 브라우저가 401을 읽으면(화면에 "인증 실패 (401)") `reachable`.
+ * - 브라우저가 응답을 읽지 못하면, 같은 요청을 브라우저 밖(Node)에서 다시 보내 원인을 가린다.
  *   사전 확인(OPTIONS)은 키·본문 없이, 본 요청(POST)은 같은 가짜 키와 UI 검사 문자열로 보낸다.
+ *   - 사전 확인이 이 출처·메서드·헤더를 허용하면 `preflight_ok`: 요청은 나가지만 오류 응답에 CORS 헤더가 없어
+ *     브라우저가 읽지 못한 경우다. 실제 키의 성공 응답을 읽을 수 있는지는 실호출로만 확인된다.
+ *   - 사전 확인이 막으면 `blocked`: 브라우저는 요청을 보내지도 못한다.
  * OPENAI_PROBE=1일 때만 실행한다 (GitHub Actions의 배포 후 검증 단계).
  */
 
@@ -33,11 +36,16 @@ const RECORDED_HEADERS = [
   'location',
 ] as const;
 
-function describeResponse(response: APIResponse) {
+interface RecordedResponse {
+  status: number;
+  headers: Record<string, string>;
+}
+
+function describeResponse(response: APIResponse): RecordedResponse {
   const headers = response.headers();
   return {
     status: response.status(),
-    headers: Object.fromEntries(RECORDED_HEADERS.filter((name) => name in headers).map((name) => [name, headers[name]])),
+    headers: Object.fromEntries(RECORDED_HEADERS.filter((name) => name in headers).map((name) => [name, headers[name] ?? ''])),
   };
 }
 
@@ -56,31 +64,51 @@ function firstLine(error: unknown) {
   return String(error).split('\n')[0]?.slice(0, 300) ?? '';
 }
 
+const listOf = (value: string | undefined) =>
+  (value ?? '')
+    .split(',')
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+
+/**
+ * 사전 확인 응답이 앱의 요청(POST, Authorization·Content-Type 헤더, 쿠키 없음)을 허용하는지 본다.
+ * Access-Control-Allow-Headers의 *는 Authorization을 포함하지 않으므로 Authorization은 이름으로 있어야 한다.
+ */
+function preflightAllows(preflight: RecordedResponse, origin: string) {
+  if (preflight.status < 200 || preflight.status >= 300) return false;
+  const allowOrigin = preflight.headers['access-control-allow-origin'];
+  const methods = listOf(preflight.headers['access-control-allow-methods']);
+  const headers = listOf(preflight.headers['access-control-allow-headers']);
+  return (
+    (allowOrigin === '*' || allowOrigin === origin) &&
+    (methods.includes('post') || methods.includes('*')) &&
+    headers.includes('authorization') &&
+    (headers.includes('content-type') || headers.includes('*'))
+  );
+}
+
 /** 브라우저가 보낸 것과 같은 요청을 브라우저 밖에서 다시 보내, OpenAI가 무엇을 돌려주는지 기록한다. */
 async function replayOutsideBrowser(request: APIRequestContext, origin: string, userAgent: string) {
   const options = { failOnStatusCode: false, maxRedirects: 0, timeout: 30_000 } as const;
-  const userAgents = [...new Set([userAgent, userAgent.replace('HeadlessChrome', 'Chrome')])];
 
-  const preflights = [];
-  for (const agent of userAgents) {
-    try {
-      const response = await request.fetch(OPENAI_RESPONSES_ENDPOINT, {
-        ...options,
-        method: 'OPTIONS',
-        headers: {
-          origin,
-          'user-agent': agent,
-          'access-control-request-method': 'POST',
-          'access-control-request-headers': 'authorization,content-type',
-        },
-      });
-      preflights.push({ userAgent: agent, ...describeResponse(response) });
-    } catch (error) {
-      preflights.push({ userAgent: agent, failed: firstLine(error) });
-    }
+  let preflight: RecordedResponse | { failed: string };
+  try {
+    const response = await request.fetch(OPENAI_RESPONSES_ENDPOINT, {
+      ...options,
+      method: 'OPTIONS',
+      headers: {
+        origin,
+        'user-agent': userAgent,
+        'access-control-request-method': 'POST',
+        'access-control-request-headers': 'authorization,content-type',
+      },
+    });
+    preflight = describeResponse(response);
+  } catch (error) {
+    preflight = { failed: firstLine(error) };
   }
 
-  let post;
+  let post: (RecordedResponse & { error: unknown }) | { failed: string };
   try {
     const response = await request.fetch(OPENAI_RESPONSES_ENDPOINT, {
       ...options,
@@ -98,7 +126,12 @@ async function replayOutsideBrowser(request: APIRequestContext, origin: string, 
     post = { failed: firstLine(error) };
   }
 
-  return { preflights, post };
+  return {
+    preflight,
+    preflightAllowsApp: 'status' in preflight && preflightAllows(preflight, origin),
+    post,
+    errorResponseHasCors: 'status' in post && 'access-control-allow-origin' in post.headers,
+  };
 }
 
 test('실제 OpenAI 엔드포인트 브라우저 호출 확인 (가짜 키)', async ({ page, baseURL, request }) => {
@@ -112,9 +145,20 @@ test('실제 OpenAI 엔드포인트 브라우저 호출 확인 (가짜 키)', as
   await expect(errorTitle(page)).toBeVisible({ timeout: 60_000 });
 
   const title = (await errorTitle(page).textContent()) ?? '';
-  const outcome = title.startsWith('인증 실패') ? 'reachable' : title.startsWith('네트워크 오류') ? 'blocked' : 'other';
   const origin = new URL(baseURL!).origin;
   const userAgent = await page.evaluate(() => navigator.userAgent);
+  const browserRead401 = title.startsWith('인증 실패');
+  const browserNetworkError = title.startsWith('네트워크 오류');
+  // 브라우저가 401을 읽었으면 다시 보내지 않는다.
+  const outsideBrowser = browserNetworkError ? await replayOutsideBrowser(request, origin, userAgent) : null;
+  const outcome = browserRead401
+    ? 'reachable'
+    : browserNetworkError
+      ? outsideBrowser?.preflightAllowsApp
+        ? 'preflight_ok'
+        : 'blocked'
+      : 'other';
+
   const report = {
     checkedAt: new Date().toISOString(),
     page: baseURL,
@@ -128,13 +172,13 @@ test('실제 OpenAI 엔드포인트 브라우저 호출 확인 (가짜 키)', as
     outsideAllowList: audit.outsideAllowList(),
     consoleErrors: audit.consoleMessages.filter((message) => message.type === 'error').map((message) => message.text),
     failedRequests: audit.failedRequests,
-    // 브라우저에서 막혔을 때만 브라우저 밖에서 다시 보내 원인을 가린다.
-    outsideBrowser: outcome === 'reachable' ? null : await replayOutsideBrowser(request, origin, userAgent),
+    outsideBrowser,
   };
   mkdirSync('test-results', { recursive: true });
   writeFileSync('test-results/openai-probe.json', `${JSON.stringify(report, null, 2)}\n`);
 
   expect(report.outsideAllowList).toEqual([]);
   expect(report.apiRequests).toBe(1);
-  expect(outcome, `화면 표시: ${title}`).toBe('reachable');
+  // preflight_ok는 통과로 본다: 브라우저가 요청을 보낼 수는 있다. 성공 응답을 읽는지는 실호출로 확인한다.
+  expect(['reachable', 'preflight_ok'], `화면 표시: ${title}, 결과: ${outcome}`).toContain(outcome);
 });

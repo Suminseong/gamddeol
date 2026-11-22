@@ -122,8 +122,10 @@ jobs:
         env:
           PROBE_OUTCOME: ${{ steps.probe.outcome }}
         run: |
+          probe_result="기록 없음"
           if [ -f test-results/openai-probe.json ]; then
-            echo "OpenAI 브라우저 호출 확인 결과:"
+            probe_result="$(node -p "require('./test-results/openai-probe.json').outcome")"
+            echo "OpenAI 브라우저 호출 확인 결과: $probe_result"
             cat test-results/openai-probe.json
           fi
           {
@@ -131,7 +133,10 @@ jobs:
             echo ""
             echo "- 주소: $PAGE_URL"
             echo "- 빌드: $BUILD_ID"
-            echo "- OpenAI 브라우저 호출 확인(가짜 키): $PROBE_OUTCOME"
+            echo "- OpenAI 브라우저 호출 확인(가짜 키): $PROBE_OUTCOME, 결과 \`$probe_result\`"
+            echo "  - reachable: 브라우저가 401 응답을 읽었다."
+            echo "  - preflight_ok: 사전 확인은 통과해 요청은 나가지만, 오류 응답에 CORS 헤더가 없어 브라우저가 읽지 못했다. 성공 응답은 실키로만 확인된다."
+            echo "  - blocked: 사전 확인에서 막혀 브라우저가 요청을 보내지 못했다."
             if [ -f test-results/openai-probe.json ]; then
               echo ""
               echo '```json'
