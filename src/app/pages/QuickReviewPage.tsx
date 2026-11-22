@@ -5,14 +5,14 @@ import { QuickReview } from '../quick/QuickReview';
 import { PageHeader } from '../ui/primitives';
 
 export function QuickReviewPage(_: PageProps) {
-  const { reviewService, keySession } = useServices();
+  const { reviewService, keySession, router } = useServices();
   return (
     <div className="page">
       <PageHeader
         title="빠른 감평"
         description="작품을 만들지 않고 원고를 붙여넣어 OpenAI 감평을 받는 알파 화면입니다. 원고와 결과는 이 화면에만 있고 작품 자료로 저장되지 않습니다."
       />
-      <QuickReview service={reviewService} keySession={keySession} />
+      <QuickReview service={reviewService} keySession={keySession} router={router} />
     </div>
   );
 }

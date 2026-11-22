@@ -89,6 +89,9 @@ test('작품 생성 → 붙여넣기 등록 → 판본에서 근거를 골라 �
   expect(file.format).toBe('gamddeol.work');
   expect(Object.values<{ normalizedText: string }>(file.data.versions).map((version) => version.normalizedText)).toEqual([UI_CHECK_TEXT]);
   expect(Object.values<{ exactQuote: string }>(file.data.anchors).map((anchor) => anchor.exactQuote)).toEqual([phrase]);
+  // 파일을 선택하거나 내려받기를 시작했다고 해서 브라우저가 저장을 마쳤다고 단정하지 않는다.
+  await expect(page.getByText(/이 작품에 내보내지 않은 변경이 있습니다/)).toBeVisible();
+  await page.getByRole('button', { name: '이 파일의 저장을 확인했어요' }).click();
   await expect(page.getByText(/이 작품에 내보내지 않은 변경이 있습니다/)).toHaveCount(0);
 
   expect(audit.outsideAllowList()).toEqual([]);

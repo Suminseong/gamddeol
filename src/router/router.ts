@@ -74,7 +74,7 @@ abstract class BaseRouter implements Router {
   abstract readonly base: string;
   protected location: RouterLocation;
   private listeners = new Set<() => void>();
-  private blockers: string[] = [];
+  private blockers: { reason: string }[] = [];
   private blockHandler: BlockHandler | null = null;
 
   constructor(initial: RouterLocation) {
@@ -104,15 +104,17 @@ abstract class BaseRouter implements Router {
   }
 
   navigate(to: string, options: { replace?: boolean; force?: boolean } = {}) {
+    const target = sanitizeLocation(splitTarget(to));
+    // 같은 화면의 링크나 본문 앵커로 이동해도 컴포넌트는 유지된다.
+    // 이때 차단기를 지우면 이후 진짜 화면 이동에서 작성 중인 내용이 유실될 수 있다.
+    const sameScreen = target.path === this.location.path && target.search === this.location.search;
     const go = () => {
-      const target = sanitizeLocation(splitTarget(to));
       this.write(target, options.replace ?? false);
       this.location = target;
       this.emit();
     };
-    if (!options.force && this.blockers.length > 0 && this.blockHandler) {
+    if (!options.force && !sameScreen && this.blockers.length > 0 && this.blockHandler) {
       this.blockHandler(() => {
-        this.blockers = [];
         go();
       });
       return;
@@ -121,15 +123,16 @@ abstract class BaseRouter implements Router {
   }
 
   block(reason: string) {
-    this.blockers.push(reason);
+    const blocker = { reason };
+    this.blockers.push(blocker);
     return () => {
-      const index = this.blockers.indexOf(reason);
+      const index = this.blockers.indexOf(blocker);
       if (index >= 0) this.blockers.splice(index, 1);
     };
   }
 
   blocked() {
-    return this.blockers[0] ?? null;
+    return this.blockers[0]?.reason ?? null;
   }
 
   onBlocked(handler: BlockHandler | null) {
@@ -146,7 +149,6 @@ abstract class BaseRouter implements Router {
       const previous = this.location;
       this.write(previous, false);
       this.blockHandler(() => {
-        this.blockers = [];
         this.write(target, false);
         this.location = target;
         this.emit();

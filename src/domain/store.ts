@@ -231,7 +231,7 @@ export function createWorkspaceStore(deps: StoreDeps = {}) {
     touch(workId: Id | null) {
       if (workId) this.touched.add(workId);
     }
-    audit(workId: Id | null, eventType: AuditEventType, summary: string, targetId: Id | null, commandId: Id | null = null) {
+    audit(workId: Id | null, eventType: AuditEventType, summary: string, targetId: Id | null, commandId: Id | null = null, changesWork = true) {
       const event: AuditEvent = {
         id: newId(),
         workId,
@@ -243,7 +243,7 @@ export function createWorkspaceStore(deps: StoreDeps = {}) {
         createdAt: now(),
       };
       this.next.audit = [...this.next.audit, event];
-      this.touch(workId);
+      if (changesWork) this.touch(workId);
     }
     processed(commandId: Id, resultId: Id) {
       this.next.processedCommands = { ...this.next.processedCommands, [commandId]: resultId };
@@ -1441,10 +1441,17 @@ export function createWorkspaceStore(deps: StoreDeps = {}) {
       return ok(outcome);
     },
 
-    markExported(workId: Id): void {
+    markExported(workId: Id, snapshotRevision: number): void {
+      // 확인은 실제로 만든 파일에 포함된 범위까지만 가능하다. 뒤늦게 이전 파일을 확인해도
+      // 더 최근에 확인한 백업을 되돌리지 않으며, 잘못된 revision은 절대 적용하지 않는다.
+      if (!state.works[workId] || !Number.isSafeInteger(snapshotRevision) || snapshotRevision < 0 || snapshotRevision > state.revision) return;
       const t = tx();
-      t.audit(workId, 'exported', 'JSON 내보내기', workId);
-      t.next.exportedRevision = { ...t.next.exportedRevision, [workId]: state.revision + 1 };
+      // 이 확인 이벤트 자체는 작품 내용의 수정이 아니므로 다시 미백업 상태를 만들지 않는다.
+      t.audit(workId, 'exported', 'JSON 파일 저장 확인', workId, null, false);
+      t.next.exportedRevision = {
+        ...t.next.exportedRevision,
+        [workId]: Math.max(state.exportedRevision[workId] ?? 0, snapshotRevision),
+      };
       t.apply();
     },
 
