@@ -1,4 +1,5 @@
 import type { ReviewConfig } from '../../review/config';
+import { isReviewPerspective, REVIEW_PERSPECTIVES, type ReviewPerspective } from '../../review/perspectives';
 import { OPENAI_RESPONSES_ENDPOINT } from '../../transport/endpoint';
 import { copy } from '../copy';
 
@@ -7,15 +8,41 @@ export type RunBlocker = 'running' | 'no_key' | 'empty' | 'too_long' | null;
 interface RunPanelProps {
   config: ReviewConfig;
   blocker: RunBlocker;
+  perspective: ReviewPerspective;
+  onPerspectiveChange(next: ReviewPerspective): void;
   onRun(): void;
   onCancel(): void;
 }
 
 /** 전송 사실 고지 + 실행·취소 버튼. 고지는 실행 버튼보다 먼저(위에) 보인다. */
-export function RunPanel({ config, blocker, onRun, onCancel }: RunPanelProps) {
+export function RunPanel({
+  config,
+  blocker,
+  perspective,
+  onPerspectiveChange,
+  onRun,
+  onCancel,
+}: RunPanelProps) {
   const running = blocker === 'running';
   return (
     <section className="panel run-panel" aria-labelledby="disclosure-heading">
+      <div className="review-perspective">
+        <label htmlFor="review-perspective">{copy.run.perspective}</label>
+        <select
+          id="review-perspective"
+          className="text-input"
+          value={perspective}
+          disabled={running}
+          onChange={(event) => {
+            const value = event.currentTarget.value;
+            if (isReviewPerspective(value)) onPerspectiveChange(value);
+          }}
+        >
+          {Object.entries(REVIEW_PERSPECTIVES).map(([value, { label }]) => (
+            <option value={value} key={value}>{label}</option>
+          ))}
+        </select>
+      </div>
       <div className="disclosure" id="send-disclosure">
         <h2 id="disclosure-heading" className="disclosure-heading">
           {copy.run.disclosureLead}

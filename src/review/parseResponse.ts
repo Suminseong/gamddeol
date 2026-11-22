@@ -10,8 +10,6 @@ export interface ParsedResponse {
 
 type JsonRecord = Record<string, unknown>;
 
-const MAX_SERVER_MESSAGE = 500;
-
 function isRecord(value: unknown): value is JsonRecord {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -24,17 +22,12 @@ function asCount(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
-export function clipMessage(message: string | null | undefined): string | undefined {
-  if (!message) return undefined;
-  return message.length > MAX_SERVER_MESSAGE ? `${message.slice(0, MAX_SERVER_MESSAGE)}…` : message;
-}
-
 function contentParts(item: JsonRecord): JsonRecord[] {
   return Array.isArray(item.content) ? item.content.filter(isRecord) : [];
 }
 
-/** 어시스턴트 메시지의 output_text와 refusal을 모은다. final_answer 단계가 있으면 그것만 쓴다. */
-function collectAssistantOutput(output: unknown): { texts: string[]; refusals: string[] } {
+/** 어시스턴트의 감평 텍스트와 거절 여부를 읽는다. final_answer 단계가 있으면 그것만 쓴다. */
+function collectAssistantOutput(output: unknown): { texts: string[]; refused: boolean } {
   const items = Array.isArray(output) ? output.filter(isRecord) : [];
   const messages = items.filter(
     (item) => item.type === 'message' && (item.role === undefined || item.role === 'assistant'),
@@ -51,13 +44,11 @@ function collectAssistantOutput(output: unknown): { texts: string[]; refusals: s
     )
     .filter((text) => text.length > 0);
 
-  const refusals = messages.flatMap((message) =>
-    contentParts(message)
-      .filter((part) => part.type === 'refusal' && typeof part.refusal === 'string')
-      .map((part) => part.refusal as string),
+  const refused = messages.some((message) =>
+    contentParts(message).some((part) => part.type === 'refusal' && typeof part.refusal === 'string'),
   );
 
-  return { texts, refusals };
+  return { texts, refused };
 }
 
 function parseUsage(value: unknown): ReviewUsage | null {
@@ -76,31 +67,24 @@ export function parseResponsesBody(bodyText: string): ParsedResponse {
   try {
     json = JSON.parse(bodyText);
   } catch {
-    throw new ReviewError('unexpected', { serverMessage: clipMessage(bodyText.trim()) });
+    throw new ReviewError('unexpected');
   }
   if (!isRecord(json)) throw new ReviewError('unexpected');
 
   const status = asString(json.status);
-  const incompleteReason = isRecord(json.incomplete_details)
-    ? asString(json.incomplete_details.reason)
-    : null;
+  const reason = isRecord(json.incomplete_details) ? json.incomplete_details.reason : null;
+  const incompleteReason = reason === 'max_output_tokens' || reason === 'content_filter' ? reason : null;
 
   if (status === 'failed' || status === 'cancelled') {
-    const error = isRecord(json.error) ? json.error : {};
-    throw new ReviewError('response_failed', {
-      serverMessage: clipMessage(asString(error.message)),
-      serverCode: asString(error.code) ?? status,
-    });
+    throw new ReviewError('response_failed');
   }
 
-  const { texts, refusals } = collectAssistantOutput(json.output);
+  const { texts, refused } = collectAssistantOutput(json.output);
   let text = texts.join('\n\n').trim();
   if (!text && typeof json.output_text === 'string') text = json.output_text.trim();
 
   if (!text) {
-    if (refusals.length > 0) {
-      throw new ReviewError('refusal', { serverMessage: clipMessage(refusals.join('\n')) });
-    }
+    if (refused) throw new ReviewError('refusal');
     throw new ReviewError('empty_response', { incompleteReason: incompleteReason ?? undefined });
   }
 

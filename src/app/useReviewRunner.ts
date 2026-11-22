@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ReviewPerspective } from '../review/perspectives';
 import type { ReviewService } from '../review/reviewService';
 import { ReviewError, type ReviewResult } from '../review/types';
 import type { KeySession } from '../session/keySession';
@@ -6,7 +7,7 @@ import type { KeySession } from '../session/keySession';
 export type RunState =
   | { phase: 'idle' }
   | { phase: 'running'; startedAt: number }
-  | { phase: 'success'; result: ReviewResult }
+  | { phase: 'success'; result: ReviewResult; perspective: ReviewPerspective }
   | { phase: 'error'; error: ReviewError };
 
 /**
@@ -18,7 +19,7 @@ export function useReviewRunner(service: ReviewService, keySession: KeySession) 
   const inFlight = useRef<AbortController | null>(null);
 
   const run = useCallback(
-    async (manuscript: string) => {
+    async (manuscript: string, perspective: ReviewPerspective) => {
       if (inFlight.current) return;
       const apiKey = keySession.get();
       if (!apiKey) {
@@ -30,8 +31,8 @@ export function useReviewRunner(service: ReviewService, keySession: KeySession) 
       inFlight.current = controller;
       setState({ phase: 'running', startedAt: Date.now() });
       try {
-        const result = await service.review({ apiKey, manuscript }, { signal: controller.signal });
-        setState({ phase: 'success', result });
+        const result = await service.review({ apiKey, manuscript, perspective }, { signal: controller.signal });
+        setState({ phase: 'success', result, perspective });
       } catch (error) {
         setState({
           phase: 'error',

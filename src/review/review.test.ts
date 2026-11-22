@@ -138,25 +138,37 @@ describe('parseResponsesBody', () => {
       parseResponsesBody(
         JSON.stringify({
           status: 'completed',
-          output: [{ type: 'message', role: 'assistant', content: [{ type: 'refusal', refusal: '못 합니다' }] }],
+          output: [{ type: 'message', role: 'assistant', content: [{ type: 'refusal', refusal: UI_CHECK_TEXT }] }],
         }),
       ),
     );
     expect(error.kind).toBe('refusal');
-    expect(error.details.serverMessage).toBe('못 합니다');
+    expect(error.details).toEqual({});
   });
 
   it('status failed는 response_failed 오류', () => {
     const error = errorOf(() =>
-      parseResponsesBody(JSON.stringify({ status: 'failed', error: { code: 'server_error', message: '실패' } })),
+      parseResponsesBody(JSON.stringify({ status: 'failed', error: { code: FAKE_API_KEY, message: UI_CHECK_TEXT } })),
     );
     expect(error.kind).toBe('response_failed');
-    expect(error.details).toMatchObject({ serverCode: 'server_error', serverMessage: '실패' });
+    expect(error.details).toEqual({});
   });
 
   it('JSON이 아니거나 객체가 아니면 unexpected', () => {
-    expect(errorOf(() => parseResponsesBody('<html>')).kind).toBe('unexpected');
+    const error = errorOf(() => parseResponsesBody(`<html>${FAKE_API_KEY}</html>`));
+    expect(error.kind).toBe('unexpected');
+    expect(error.details).toEqual({});
     expect(errorOf(() => parseResponsesBody('[]')).kind).toBe('unexpected');
+  });
+
+  it('알 수 없는 미완료 사유는 화면에 노출하지 않는다', () => {
+    const body = { status: 'incomplete', incomplete_details: { reason: UI_CHECK_TEXT }, output: [] };
+    const error = errorOf(() => parseResponsesBody(JSON.stringify(body)));
+    expect(error.kind).toBe('empty_response');
+    expect(error.details.incompleteReason).toBeUndefined();
+
+    const parsed = parseResponsesBody(JSON.stringify({ ...body, output: [message('부분 응답')] }));
+    expect(parsed.incompleteReason).toBe('unknown');
   });
 
   it('output이 없고 output_text만 있으면 그것을 쓴다', () => {
@@ -185,11 +197,10 @@ describe('reviewErrorFromHttp', () => {
     expect(reviewErrorFromHttp(status, text).kind).toBe(kind);
   });
 
-  it('OpenAI 메시지와 code를 남기고 긴 메시지는 자른다', () => {
-    const error = reviewErrorFromHttp(401, body('invalid_api_key', 'invalid_request_error', 'x'.repeat(600)));
-    expect(error.details.status).toBe(401);
-    expect(error.details.serverCode).toBe('invalid_api_key');
-    expect(error.details.serverMessage?.length).toBe(501);
+  it('키나 입력값이 오류 본문에 있어도 오류 상태만 남긴다', () => {
+    const error = reviewErrorFromHttp(401, body(FAKE_API_KEY, FAKE_API_KEY, UI_CHECK_TEXT));
+    expect(error.kind).toBe('auth');
+    expect(error.details).toEqual({ status: 401 });
   });
 });
 

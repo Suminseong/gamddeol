@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ReviewConfig } from '../../review/config';
+import { REVIEW_PERSPECTIVES, type ReviewPerspective } from '../../review/perspectives';
 import type { ReviewError, ReviewResult } from '../../review/types';
 import { copy } from '../copy';
 import type { RunState } from '../useReviewRunner';
@@ -27,7 +28,9 @@ export function ResultPanel({ state, config, hasKey, canRetry, onRetry }: Result
         </p>
       )}
       {state.phase === 'running' && <Waiting startedAt={state.startedAt} />}
-      {state.phase === 'success' && <ResultView result={state.result} config={config} />}
+      {state.phase === 'success' && (
+        <ResultView result={state.result} config={config} perspective={state.perspective} />
+      )}
       {state.phase === 'error' && <ErrorView error={state.error} canRetry={canRetry} onRetry={onRetry} />}
     </section>
   );
@@ -52,7 +55,15 @@ function Waiting({ startedAt }: { startedAt: number }) {
   );
 }
 
-function ResultView({ result, config }: { result: ReviewResult; config: ReviewConfig }) {
+function ResultView({
+  result,
+  config,
+  perspective,
+}: {
+  result: ReviewResult;
+  config: ReviewConfig;
+  perspective: ReviewPerspective;
+}) {
   const mock = result.source === 'mock';
   const meta = [
     result.model ? `${copy.result.meta.model} ${result.model}` : null,
@@ -69,6 +80,7 @@ function ResultView({ result, config }: { result: ReviewResult; config: ReviewCo
         </span>
         <span className="result-meta">{meta.join(' · ')}</span>
       </p>
+      <p className="result-perspective">{copy.result.perspective(REVIEW_PERSPECTIVES[perspective].label)}</p>
       {result.incompleteReason && (
         <p className="truncated-note">{copy.result.truncated(result.incompleteReason, config.maxOutputTokens)}</p>
       )}
@@ -82,7 +94,7 @@ function ResultView({ result, config }: { result: ReviewResult; config: ReviewCo
 
 function ErrorView({ error, canRetry, onRetry }: { error: ReviewError; canRetry: boolean; onRetry(): void }) {
   const text = copy.errors[error.kind];
-  const { status, serverMessage, serverCode, incompleteReason } = error.details;
+  const { status } = error.details;
   return (
     <div className="error-view" data-error-kind={error.kind}>
       <p className="error-title" role="alert">
@@ -90,29 +102,8 @@ function ErrorView({ error, canRetry, onRetry }: { error: ReviewError; canRetry:
         {status ? ` (${status})` : ''}
       </p>
       <p>{text.guide}</p>
-      {(serverMessage || serverCode || incompleteReason) && (
-        <dl className="error-details">
-          {serverMessage && (
-            <>
-              <dt>{copy.result.serverMessage}</dt>
-              <dd>{serverMessage}</dd>
-            </>
-          )}
-          {serverCode && (
-            <>
-              <dt>code</dt>
-              <dd>{serverCode}</dd>
-            </>
-          )}
-          {incompleteReason && (
-            <>
-              <dt>incomplete</dt>
-              <dd>{incompleteReason}</dd>
-            </>
-          )}
-        </dl>
-      )}
       <p className="hint">{copy.result.inputKept}</p>
+      <p className="hint">{copy.result.retryPerspective}</p>
       <button type="button" className="button-secondary" onClick={onRetry} disabled={!canRetry}>
         {copy.result.retry}
       </button>

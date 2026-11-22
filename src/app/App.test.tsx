@@ -1,6 +1,8 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { buildResponsesRequest } from '../review/buildRequest';
+import { REVIEW_CONFIG } from '../review/config';
 import { createReviewService } from '../review/reviewService';
 import { createKeySession } from '../session/keySession';
 import { FAKE_API_KEY, UI_CHECK_TEXT } from '../testing/fixtures';
@@ -98,7 +100,43 @@ describe('App', () => {
     expect(resultText.textContent).toBe(MOCK_RESPONSE_TEXT);
     expect(screen.getByText('모의 응답 · 네트워크 미사용')).toBeTruthy();
     expect(transport.calls).toHaveLength(1);
-    expect(transport.calls[0]?.body).toMatchObject({ input: UI_CHECK_TEXT, model: 'gpt-6-luna', store: false });
+    expect(transport.calls[0]?.body).toMatchObject({
+      input: UI_CHECK_TEXT,
+      instructions: REVIEW_CONFIG.instructions,
+      model: 'gpt-6-luna',
+      store: false,
+    });
+  });
+
+  it('선택한 관점을 지시에 추가하고 결과에는 제출한 관점을 표시한다', async () => {
+    const { transport, user } = setup();
+    await registerKey(user);
+    await typeManuscript(user);
+
+    const selector = screen.getByRole('combobox', { name: '감평 관점' });
+    await user.selectOptions(selector, 'pacing');
+    expect(transport.calls).toHaveLength(0);
+    await user.click(runButton());
+
+    expect(await screen.findByText('적용한 감평 관점 · 전개·몰입')).toBeTruthy();
+    expect(transport.calls).toHaveLength(1);
+    const base = buildResponsesRequest(UI_CHECK_TEXT, REVIEW_CONFIG);
+    expect(transport.calls[0]?.body).toEqual({
+      ...base,
+      instructions: expect.stringContaining(`${REVIEW_CONFIG.instructions}\n\n전개 속도`),
+    });
+
+    await user.selectOptions(selector, 'coherence');
+    expect(screen.getByText('적용한 감평 관점 · 전개·몰입')).toBeTruthy();
+    expect(transport.calls).toHaveLength(1);
+    await user.click(runButton());
+
+    expect(await screen.findByText('적용한 감평 관점 · 인물·설정 일관성')).toBeTruthy();
+    expect(transport.calls).toHaveLength(2);
+    expect(transport.calls[1]?.body).toEqual({
+      ...base,
+      instructions: expect.stringContaining(`${REVIEW_CONFIG.instructions}\n\n인물의 행동과 동기`),
+    });
   });
 
   it('실행 중에는 중복 제출을 막고 진행 상태를 보여 준다', async () => {

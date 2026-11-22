@@ -1,4 +1,5 @@
 import type { ReviewConfig } from './config';
+import { DEFAULT_REVIEW_PERSPECTIVE, REVIEW_PERSPECTIVES, type ReviewPerspective } from './perspectives';
 
 /** OpenAI Responses API 요청 본문 (이 앱이 쓰는 필드만). */
 export interface ResponsesRequestBody {
@@ -14,10 +15,12 @@ export interface ResponsesRequestBody {
 export function buildResponsesRequest(
   manuscript: string,
   config: ReviewConfig,
+  perspective: ReviewPerspective = DEFAULT_REVIEW_PERSPECTIVE,
 ): ResponsesRequestBody {
+  const focus = REVIEW_PERSPECTIVES[perspective].instructions;
   const body: ResponsesRequestBody = {
     model: config.model,
-    instructions: config.instructions,
+    instructions: focus ? `${config.instructions}\n\n${focus}` : config.instructions,
     input: manuscript,
     max_output_tokens: config.maxOutputTokens,
     store: config.store,
