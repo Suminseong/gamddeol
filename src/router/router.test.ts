@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { createMemoryRouter, sanitizeLocation } from './router';
+import { createBrowserRouter, createMemoryRouter, sanitizeLocation } from './router';
 import { isReleased, pathFor, resolvePath, ROUTES } from './routes';
 
 const ID = '0f8fad5b-d9cb-469f-a165-70867728950e';
@@ -83,5 +83,86 @@ describe('주소·방문 기록에 남는 값', () => {
     router.block('다시 작성 중');
     router.navigate('/works', { force: true });
     expect(router.current().path).toBe('/works');
+  });
+
+  it('같은 화면과 앵커 이동은 차단하지 않고, 이후 화면이나 질의 변경의 차단은 유지한다', () => {
+    const router = createMemoryRouter('/review?kind=manuscript_review');
+    const asked: (() => void)[] = [];
+    router.onBlocked((proceed) => asked.push(proceed));
+    const release = router.block('작성 중');
+
+    router.navigate('/review?kind=manuscript_review');
+    router.navigate('/review?kind=manuscript_review#main-content');
+    expect(router.current().hash).toBe('#main-content');
+    expect(asked).toHaveLength(0);
+    expect(router.blocked()).toBe('작성 중');
+
+    router.navigate('/review?kind=lore_extraction');
+    expect(asked).toHaveLength(1);
+    expect(router.current().search).toBe('?kind=manuscript_review');
+    asked[0]!();
+    expect(router.current().search).toBe('?kind=lore_extraction');
+    expect(router.blocked()).toBe('작성 중');
+
+    router.navigate('/works');
+    expect(asked).toHaveLength(2);
+    expect(router.current().path).toBe('/review');
+    asked[1]!();
+    expect(router.current().path).toBe('/works');
+    // 화면 언마운트의 cleanup이 자기 차단기를 해제한다.
+    release();
+    expect(router.blocked()).toBeNull();
+  });
+
+  it('동일 사유의 차단기는 소유자별로 해제되고, cleanup을 반복해도 다른 차단기가 지워지지 않는다', () => {
+    const router = createMemoryRouter('/review');
+    const asked: (() => void)[] = [];
+    router.onBlocked((proceed) => asked.push(proceed));
+    const releaseFirst = router.block('작성 중');
+    const releaseSecond = router.block('작성 중');
+    releaseSecond();
+    releaseSecond();
+    expect(router.blocked()).toBe('작성 중');
+    router.navigate('/works');
+    router.navigate('/settings');
+    expect(asked).toHaveLength(2);
+    asked[1]!();
+    expect(router.current().path).toBe('/settings');
+    expect(router.blocked()).toBe('작성 중');
+    releaseFirst();
+    expect(router.blocked()).toBeNull();
+    router.navigate('/works');
+    expect(router.current().path).toBe('/works');
+  });
+
+  it('뒤로 가기의 질의 변경을 확인해도 컴포넌트의 차단기는 cleanup까지 유지한다', () => {
+    const location = new URL('https://example.com/gamddeol/review?kind=manuscript_review');
+    let onPop = () => {};
+    const write = (_data: unknown, _unused: string, url?: string | URL | null) => {
+      const next = new URL(String(url), location);
+      location.pathname = next.pathname;
+      location.search = next.search;
+      location.hash = next.hash;
+    };
+    const win = {
+      location,
+      history: { pushState: write, replaceState: write },
+      addEventListener: (name: string, handler: () => void) => { if (name === 'popstate') onPop = handler; },
+    } as unknown as Window;
+    const router = createBrowserRouter('/gamddeol/', win);
+    const asked: (() => void)[] = [];
+    router.onBlocked((proceed) => asked.push(proceed));
+    const release = router.block('빠른 감평 작성 중');
+    location.search = '?kind=lore_extraction';
+    onPop();
+    expect(router.current().search).toBe('?kind=manuscript_review');
+    expect(asked).toHaveLength(1);
+    asked[0]!();
+    expect(router.current().search).toBe('?kind=lore_extraction');
+    expect(router.blocked()).toBe('빠른 감평 작성 중');
+    router.navigate('/works');
+    expect(asked).toHaveLength(2);
+    release();
+    expect(router.blocked()).toBeNull();
   });
 });

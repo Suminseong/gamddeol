@@ -16,11 +16,12 @@ interface ResultPanelProps {
 }
 
 export function ResultPanel({ state, config, hasKey, selectedPerspective, canRetry, onRetry }: ResultPanelProps) {
+  const previous = state.phase === 'running' || state.phase === 'error' ? state.previous : null;
+  const shown = state.phase === 'success' ? { result: state.result, perspective: state.perspective } : previous;
   return (
     <section
       className="panel result-panel"
       aria-labelledby="result-heading"
-      aria-busy={state.phase === 'running'}
       data-phase={state.phase}
     >
       <h2 id="result-heading">{copy.result.heading}</h2>
@@ -30,14 +31,6 @@ export function ResultPanel({ state, config, hasKey, selectedPerspective, canRet
         </p>
       )}
       {state.phase === 'running' && <Waiting startedAt={state.startedAt} />}
-      {state.phase === 'success' && (
-        <ResultView
-          result={state.result}
-          config={config}
-          perspective={state.perspective}
-          selectedPerspective={selectedPerspective}
-        />
-      )}
       {state.phase === 'error' && (
         <ErrorView
           error={state.error}
@@ -45,6 +38,19 @@ export function ResultPanel({ state, config, hasKey, selectedPerspective, canRet
           canRetry={canRetry}
           onRetry={onRetry}
         />
+      )}
+      {shown && (
+        <div>
+          {previous && <p className="hint">{state.phase === 'running' ? '새 감평을 기다리는 동안 이전 결과를 보여 드립니다.' : '새 감평을 완료하지 못해 이전 결과를 그대로 보여 드립니다.'}</p>}
+          <ResultView
+            result={shown.result}
+            config={config}
+            perspective={shown.perspective}
+            selectedPerspective={selectedPerspective}
+            announce={!previous}
+            showPerspectiveChanged={state.phase !== 'running'}
+          />
+        </div>
       )}
     </section>
   );
@@ -83,11 +89,15 @@ function ResultView({
   config,
   perspective,
   selectedPerspective,
+  announce,
+  showPerspectiveChanged,
 }: {
   result: ReviewResult;
   config: ReviewConfig;
   perspective: ReviewPerspective;
   selectedPerspective: ReviewPerspective;
+  announce: boolean;
+  showPerspectiveChanged: boolean;
 }) {
   const mock = result.source === 'mock';
   const meta = [
@@ -99,14 +109,14 @@ function ResultView({
 
   return (
     <div className="result-view" data-source={result.source}>
-      <p className="result-head" role="status">
+      <p className="result-head" role={announce ? 'status' : undefined}>
         <span className={mock ? 'badge badge-mock' : 'badge badge-ai'}>
           {mock ? copy.result.badgeMock : copy.result.badgeOpenAI}
         </span>
         <span className="result-meta">{meta.join(' · ')}</span>
       </p>
       <p className="result-perspective">{copy.result.perspective(REVIEW_PERSPECTIVES[perspective].label)}</p>
-      {selectedPerspective !== perspective && (
+      {showPerspectiveChanged && selectedPerspective !== perspective && (
         <p className="perspective-changed hint">
           {copy.result.perspectiveChanged(REVIEW_PERSPECTIVES[selectedPerspective].label)}
         </p>

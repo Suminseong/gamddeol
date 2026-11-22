@@ -177,6 +177,48 @@ describe('QuickReview (알파 빠른 감평)', () => {
     expect(screen.queryByText(/이 결과에 반영되지 않았습니다/)).toBeNull();
   });
 
+  it('새 감평을 기다리거나 실패해도 이전 결과와 실행 당시 관점을 보존하고 성공 시 교체한다', async () => {
+    const { transport, user } = setup({ delayMs: 150 });
+    await registerKey(user);
+    await typeManuscript(user);
+    await user.click(runButton());
+    expect((await screen.findByTestId('result-text')).textContent).toBe(MOCK_RESPONSE_TEXT);
+    expect(screen.getByText('적용한 감평 관점 · 일반 감평')).toBeTruthy();
+
+    transport.queue('server_error', 'truncated');
+    await user.click(screen.getByRole('radio', { name: '전개·몰입' }));
+    await user.click(runButton());
+    expect(await screen.findByText('새 감평을 기다리는 동안 이전 결과를 보여 드립니다.')).toBeTruthy();
+    expect(screen.getByTestId('result-text').textContent).toBe(MOCK_RESPONSE_TEXT);
+    expect(screen.getByText('적용한 감평 관점 · 일반 감평')).toBeTruthy();
+    expect(screen.queryByText(/이 결과에 반영되지 않았습니다/)).toBeNull();
+    expect(screen.getByText('OpenAI 응답을 기다리는 중입니다.').getAttribute('role')).toBe('status');
+
+    expect((await screen.findByRole('alert')).textContent).toBe('OpenAI 서버 오류 (500)');
+    expect(screen.getByText('새 감평을 완료하지 못해 이전 결과를 그대로 보여 드립니다.')).toBeTruthy();
+    expect(screen.getByTestId('result-text').textContent).toBe(MOCK_RESPONSE_TEXT);
+    expect(screen.getByText('적용한 감평 관점 · 일반 감평')).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: '다시 시도' }));
+    expect(await screen.findByText('적용한 감평 관점 · 전개·몰입')).toBeTruthy();
+    expect(screen.getByTestId('result-text').textContent).toContain('[모의 응답] 출력 상한');
+    expect(transport.calls).toHaveLength(3);
+  });
+
+  it('새 감평을 취소해도 직전 성공 결과와 관점을 보존한다', async () => {
+    const { transport, user } = setup({ delayMs: 150 });
+    await registerKey(user);
+    await typeManuscript(user);
+    await user.click(runButton());
+    await screen.findByTestId('result-text');
+    await user.click(screen.getByRole('radio', { name: '인물·설정 일관성' }));
+    await user.click(runButton());
+    await user.click(await screen.findByRole('button', { name: '취소' }));
+    expect((await screen.findByRole('alert')).textContent).toBe('취소됨');
+    expect(screen.getByTestId('result-text').textContent).toBe(MOCK_RESPONSE_TEXT);
+    expect(screen.getByText('적용한 감평 관점 · 일반 감평')).toBeTruthy();
+    expect(transport.calls).toHaveLength(2);
+  });
+
   it('긴 결과 본문은 키보드로 초점을 받을 수 있는 이름 있는 영역이다', async () => {
     const { user } = setup();
     await registerKey(user);
