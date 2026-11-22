@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { ReviewPerspective } from '../review/perspectives';
-import type { ReviewService } from '../review/reviewService';
-import { ReviewError, type ReviewResult } from '../review/types';
-import type { KeySession } from '../session/keySession';
+import type { ReviewPerspective } from '../../review/perspectives';
+import type { ReviewService } from '../../review/reviewService';
+import { ReviewError, type ReviewResult } from '../../review/types';
+import type { KeySession } from '../../session/keySession';
 
 export type RunState =
   | { phase: 'idle' }

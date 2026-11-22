@@ -172,6 +172,18 @@ export function createMockTransport(options: MockTransportOptions = {}): MockTra
       await wait(delayMs, signal);
       const outcome = mockOutcome(current);
       if (outcome instanceof TransportError) throw outcome;
+      // 구조화 출력(설정 후보 추출) 요청이면 성공 응답을 빈 후보 목록 JSON으로 바꾼다.
+      const format = (body as { text?: { format?: { type?: string } } } | null)?.text?.format?.type;
+      if (format === 'json_schema' && current === 'success') {
+        return json(200, {
+          id: 'resp_mock_extract',
+          object: 'response',
+          status: 'completed',
+          model: 'mock-model',
+          output: messageOutput('{"candidates":[]}'),
+          usage: { input_tokens: 12, output_tokens: 4, total_tokens: 16 },
+        });
+      }
       return outcome;
     },
   };

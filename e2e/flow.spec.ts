@@ -45,7 +45,7 @@ test('키 등록은 요청을 보내지 않고, 실행할 때만 허용된 엔�
     await fulfillJson(route, 200, mockSuccessBody());
   });
 
-  await page.goto('./');
+  await page.goto('review');
   await expect(page.getByText('https://api.openai.com/v1/responses')).toBeVisible();
   await expect(page.getByText(/OpenAI는 API 키를 브라우저나 모바일 앱 같은 클라이언트 환경에 두지 말고/)).toBeVisible();
 
@@ -116,7 +116,7 @@ test('오류마다 입력을 유지하고, 다시 시도하면 이어서 성공�
     await respond(route);
   });
 
-  await page.goto('./');
+  await page.goto('review');
   await registerFakeKey(page);
   await fillUiCheckText(page);
   await runButton(page).click();
@@ -124,7 +124,7 @@ test('오류마다 입력을 유지하고, 다시 시도하면 이어서 성공�
   for (const title of expectedTitles) {
     await expect(errorTitle(page)).toHaveText(title);
     await expect(manuscriptInput(page)).toHaveValue(UI_CHECK_TEXT);
-    await expect(page.getByText(/키 등록됨/)).toBeVisible();
+    await expect(page.getByText(/^키 등록됨/)).toBeVisible();
     await page.getByRole('button', { name: '다시 시도' }).click();
   }
 
@@ -144,7 +144,7 @@ test('시간 초과 뒤 다시 시도할 수 있다', async ({ page }) => {
     await fulfillJson(route, 200, mockSuccessBody());
   });
 
-  await page.goto('./');
+  await page.goto('review');
   await registerFakeKey(page);
   await fillUiCheckText(page);
   await runButton(page).click();
@@ -164,7 +164,7 @@ test('실행 중 취소하면 입력을 유지한다', async ({ page }) => {
     // 응답하지 않는다.
   });
 
-  await page.goto('./');
+  await page.goto('review');
   await registerFakeKey(page);
   await fillUiCheckText(page);
   await runButton(page).click();
@@ -178,7 +178,7 @@ test('실행 중 취소하면 입력을 유지한다', async ({ page }) => {
 });
 
 test('지우기를 누르면 키가 사라져 실행할 수 없다', async ({ page }) => {
-  await page.goto('./');
+  await page.goto('review');
   await registerFakeKey(page);
   await fillUiCheckText(page);
   await expect(runButton(page)).toBeEnabled();

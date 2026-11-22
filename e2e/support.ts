@@ -68,7 +68,8 @@ export function auditPage(page: Page, baseURL: string): PageAudit {
     apiRequestCount: () => audit.apiMethods.filter((method) => method !== 'OPTIONS').length,
     outsideAllowList: () =>
       audit.requests.filter((raw) => {
-        if (raw === OPENAI_RESPONSES_ENDPOINT || raw.startsWith('data:')) return false;
+        // data:·같은 출처의 blob:(내려받기 파일)은 네트워크 전송이 아니다.
+        if (raw === OPENAI_RESPONSES_ENDPOINT || raw.startsWith('data:') || raw.startsWith(`blob:${base.origin}/`)) return false;
         const url = new URL(raw);
         return !(url.origin === base.origin && url.pathname.startsWith(base.pathname));
       }),
@@ -81,9 +82,15 @@ export function auditPage(page: Page, baseURL: string): PageAudit {
     audit.failedRequests.push(`${request.url()} ${request.failure()?.errorText ?? ''}`),
   );
   page.on('response', (response) => {
-    if (response.status() >= 400 && response.url() !== OPENAI_RESPONSES_ENDPOINT) {
-      audit.badResponses.push(`${response.status()} ${response.url()}`);
-    }
+    if (response.status() < 400 || response.url() === OPENAI_RESPONSES_ENDPOINT) return;
+    // GitHub Pages는 앱 안쪽 주소로 직접 들어오면 404 상태와 함께 404.html(= index.html 사본)을 준다. 화면은 앱이 그린다.
+    const url = new URL(response.url());
+    const spaFallback =
+      response.status() === 404 &&
+      response.request().resourceType() === 'document' &&
+      url.origin === base.origin &&
+      url.pathname.startsWith(base.pathname);
+    if (!spaFallback) audit.badResponses.push(`${response.status()} ${response.url()}`);
   });
   page.on('console', (message) => audit.consoleMessages.push({ type: message.type(), text: message.text() }));
   page.on('pageerror', (error) => audit.pageErrors.push(String(error)));
@@ -112,7 +119,7 @@ export const resultText = (page: Page) => page.getByTestId('result-text');
 export async function registerFakeKey(page: Page) {
   await keyInput(page).fill(FAKE_API_KEY);
   await page.getByRole('button', { name: '등록' }).click();
-  await expect(page.getByText(/키 등록됨/)).toBeVisible();
+  await expect(page.getByText(/^키 등록됨/)).toBeVisible();
   await expect(keyInput(page)).toHaveValue('');
 }
 
@@ -135,7 +142,8 @@ export async function readBrowserState(page: Page) {
   }));
 }
 
-export async function expectNothingPersisted(page: Page, baseURL: string) {
+/** 앱 화면 경로(프로젝트 경로 기준). 빠른 감평 화면은 'review'. */
+export async function expectNothingPersisted(page: Page, baseURL: string, path = 'review') {
   const state = await readBrowserState(page);
   expect({
     localStorage: state.localStorage,
@@ -145,6 +153,7 @@ export async function expectNothingPersisted(page: Page, baseURL: string) {
     caches: state.caches,
     serviceWorkers: state.serviceWorkers,
   }).toEqual({ localStorage: 0, sessionStorage: 0, cookie: '', indexedDB: 0, caches: 0, serviceWorkers: 0 });
-  expect(state.url).toBe(new URL('./', baseURL).href);
+  // 주소에는 화면 경로만 남고 키·원고·검색어 같은 값(질의·해시)은 남지 않는다.
+  expect(state.url).toBe(new URL(path, baseURL).href);
   expect(state.html).not.toContain(FAKE_API_KEY);
 }

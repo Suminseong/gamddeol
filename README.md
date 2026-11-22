@@ -49,7 +49,7 @@ npm run check      # 타입 검사 · 테스트 · 빌드(배포 파일 검사) 
 | [experiments/virtual-readers/README.md](experiments/virtual-readers/README.md) | 가상 독자 계산 PoC (실험): 결과, 검증, 미해결 계산 가정 |
 | [docs/reviews/tech-review-claude-v0.1.md](docs/reviews/tech-review-claude-v0.1.md) | 개발 담당 기술 검토 의견서 v0.1 (사본) |
 | [docs/reviews/t01-t08-claude-response-v0.1.md](docs/reviews/t01-t08-claude-response-v0.1.md) | GPT 쟁점 T01–T08에 대한 개발 담당 답변 v0.1 (검토 대기) |
-| [docs/design/](docs/design/README.md) | 디자인 시스템 v0.2 토큰 원본 보관 (사양서 원본은 Gemini의 Google Docs) |
+| [docs/design/](docs/design/README.md) | 디자인 시스템 v0.3 토큰 원본 보관 (사양서 원본은 Gemini의 Google Docs) |
 
 ## 원본 자료 위치
 
