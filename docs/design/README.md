@@ -3,7 +3,10 @@
 디자인·UX·텍스트 담당은 Gemini다.
 
 - **원본:** 디자인 사양서의 원본은 Gemini가 관리하는 **Google Docs**다. 이 폴더는 개발 참고용 사본이며, 내용이 다르면 Google Docs가 우선한다.
-- **상태:** 프레임워크가 아직 승인되지 않아(D01–D07 대기) 토큰을 코드에 통합하지 않았다. `tokens/`의 파일은 받은 원본 그대로 보관한다. 수정은 Gemini 사양 갱신을 거쳐 새 버전으로 교체한다.
+- **상태:** `tokens/`의 파일은 받은 원본 그대로 보관한다. 수정은 Gemini 사양 갱신을 거쳐 새 버전으로 교체한다.
+  - 개인 검증용 알파([../alpha/README.md](../alpha/README.md))가 `design-tokens.css`를 그대로 불러와 CSS 변수와 `.neu-cta-button`, `.flat-reader-surface`, `.flat-reader-column`을 쓴다. 반응형 기준은 1200px / 768px을 따른다.
+  - 알파 화면 문구는 개발 담당이 쓴 초안이다. UX 라이팅 검토가 필요하다.
+  - 본 제품 프레임워크는 아직 승인되지 않았다(D01–D07 대기).
 
 ## 파일
 
