@@ -139,6 +139,69 @@ describe('App', () => {
     });
   });
 
+  it('키를 등록하면 빈 결과 문구가 다시 키 등록을 요구하지 않는다', async () => {
+    const { user } = setup();
+    expect(screen.getByText(/키가 없으면 감평을 실행할 수 없습니다/)).toBeTruthy();
+    await registerKey(user);
+    const empty = screen.getByText(/아직 결과가 없습니다/);
+    expect(empty.textContent).not.toMatch(/키를 등록/);
+    expect(empty.textContent).toMatch(/감평 관점/);
+  });
+
+  it('전송 고지에 선택한 관점의 감평 지시가 함께 간다고 알리고, 관점 설명을 연결한다', async () => {
+    const { user } = setup();
+    const disclosure = document.getElementById('send-disclosure');
+    expect(disclosure?.textContent).toContain('감평 지시(기본 지시 + 선택한 관점 「일반 감평」) → 요청 본문');
+
+    const selector = screen.getByRole<HTMLSelectElement>('combobox', { name: '감평 관점' });
+    await user.selectOptions(selector, 'coherence');
+    expect(disclosure?.textContent).toContain('선택한 관점 「인물·설정 일관성」');
+    const describedBy = selector.getAttribute('aria-describedby')?.split(' ') ?? [];
+    const description = describedBy.map((id) => document.getElementById(id)?.textContent ?? '').join(' ');
+    expect(description).toMatch(/인물의 행동·동기/);
+    expect(description).toMatch(/다음 실행부터 적용/);
+  });
+
+  it('결과를 받은 뒤 관점을 바꾸면 이번 결과에는 반영되지 않고 다음 실행에 적용된다고 알린다', async () => {
+    const { transport, user } = setup();
+    await registerKey(user);
+    await typeManuscript(user);
+    await user.click(runButton());
+    expect(await screen.findByText('적용한 감평 관점 · 일반 감평')).toBeTruthy();
+    expect(screen.queryByText(/이 결과에 반영되지 않았습니다/)).toBeNull();
+
+    await user.selectOptions(screen.getByRole('combobox', { name: '감평 관점' }), 'pacing');
+    expect(screen.getByText('적용한 감평 관점 · 일반 감평')).toBeTruthy();
+    expect(screen.getByText(/「전개·몰입」은 이 결과에 반영되지 않았습니다. 다음 감평 실행에 적용됩니다./)).toBeTruthy();
+    expect(transport.calls).toHaveLength(1);
+
+    await user.selectOptions(screen.getByRole('combobox', { name: '감평 관점' }), 'general');
+    expect(screen.queryByText(/이 결과에 반영되지 않았습니다/)).toBeNull();
+  });
+
+  it('긴 결과 본문은 키보드로 초점을 받을 수 있는 이름 있는 영역이다', async () => {
+    const { user } = setup();
+    await registerKey(user);
+    await typeManuscript(user);
+    await user.click(runButton());
+    const region = await screen.findByRole('region', { name: '감평 결과 본문' });
+    expect(region.tabIndex).toBe(0);
+    expect(region).toBe(screen.getByTestId('result-text'));
+  });
+
+  it('대기 중 상태 영역에는 경과 시간을 넣지 않는다', async () => {
+    const { user } = setup({ delayMs: 300 });
+    await registerKey(user);
+    await typeManuscript(user);
+    await user.click(runButton());
+    const status = await screen.findByText('OpenAI 응답을 기다리는 중입니다.');
+    expect(status.getAttribute('role')).toBe('status');
+    const elapsed = document.querySelector('.waiting-elapsed');
+    expect(elapsed?.getAttribute('aria-hidden')).toBe('true');
+    expect(elapsed?.closest('[role="status"]')).toBeNull();
+    await screen.findByTestId('result-text');
+  });
+
   it('실행 중에는 중복 제출을 막고 진행 상태를 보여 준다', async () => {
     const { transport, user } = setup({ delayMs: 300 });
     await registerKey(user);

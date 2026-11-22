@@ -78,6 +78,7 @@ export function App({ service, keySession, buildId, mockTransport = null }: AppP
             state={state}
             config={service.config}
             hasKey={hasKey}
+            selectedPerspective={perspective}
             canRetry={blocker === null}
             onRetry={startRun}
           />
