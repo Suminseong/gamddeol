@@ -1,7 +1,9 @@
 /**
  * 작가용 창작 관리 플랫폼 & 가상 연재 시뮬레이터
- * Design System Tokens & Selective Neumorphism CSS v0.2
+ * Design System Tokens & Selective Neumorphism CSS v0.3
  * Author: Gemini (Design, UX & Copy) | Date: 2026-11-22
+ * v0.3: 컨트롤 경계(--color-border-control), 오류 경계(--status-danger-border), 비교·근거 강조, 앱 쉘 레이아웃·Z-index 토큰 추가.
+ *       변수 블록은 Gemini 전면 디자인 명세 v0.3 원문, 아래 컴포넌트 클래스는 v0.2 그대로.
  */
 
 :root {
@@ -13,85 +15,74 @@
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   /* Type Scale */
-  --text-xs: 0.75rem;      /* 12px */
-  --text-sm: 0.8125rem;    /* 13px */
-  --text-base: 0.9375rem;  /* 15px */
-  --text-md: 1rem;         /* 16px */
-  --text-reader: 1.0625rem;/* 17px */
-  --text-lg: 1.125rem;     /* 18px */
-  --text-xl: 1.375rem;     /* 22px */
-  --text-2xl: 1.75rem;     /* 28px */
+  --text-xs: 0.75rem;       /* 12px - 메타·배지 */
+  --text-sm: 0.8125rem;     /* 13px - 보조 안내·테이블 셀 */
+  --text-base: 0.9375rem;   /* 15px - 기본 UI 본문 */
+  --text-md: 1rem;          /* 16px - 모바일 입력(자동줌 방지)·주요 CTA */
+  --text-reader: 1.0625rem; /* 17px - 원고/감평 본문 열람 */
+  --text-lg: 1.125rem;      /* 18px - 패널 제목(h2) */
+  --text-xl: 1.375rem;      /* 22px - 페이지 제목(h1) */
+  --text-2xl: 1.75rem;      /* 28px - 대시보드 KPI 수치 */
 
-  /* Line Heights & Reader Measure */
+  /* Line Heights & Measure */
   --leading-tight: 1.3;
   --leading-ui: 1.5;
   --leading-reader: 1.8;
-  --reader-max-width: 700px; /* ~38-45 Korean characters per line */
-
-  /* Layout Dimensions */
-  --sidebar-width: 220px;
-  --sidebar-collapsed-width: 64px;
-  --inspector-width: 380px;
+  --reader-max-width: 700px; /* 한글 38~45자/줄 */
 
   /* Spacing & Radii */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-12: 48px;
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-6: 24px; --space-8: 32px; --space-12: 48px;
+  --radius-sm: 6px; --radius-md: 10px; --radius-lg: 14px; --radius-xl: 18px; --radius-full: 9999px;
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
-  --radius-full: 9999px;
+  /* Layout Shell Dimensions */
+  --topbar-height: 56px;
+  --sidebar-width: 240px;
+  --sidebar-collapsed-width: 64px;
+  --inspector-width: 380px;
+  --bottom-bar-height: 64px;
+  --content-max-width: 1440px;
 
-  /* Light Mode (Paper Tone - Default) */
+  /* Z-Index Scale */
+  --z-sticky: 10;
+  --z-topbar: 20;
+  --z-drawer-backdrop: 30;
+  --z-drawer: 40;
+  --z-modal: 50;
+  --z-toast: 60;
+
+  /* Light Mode (Paper Tone) */
   --color-canvas-primary: #F6F5F2;
   --color-canvas-secondary: #ECEAE4;
   --color-surface-elevated: #FFFFFF;
   --color-text-primary: #1E1F22;
-  --color-text-secondary: #646870;
-  --color-text-muted: #969BA5;
-  --color-border-subtle: #E2E0D8;
-  --color-border-strong: #C9C5B9;
+  --color-text-secondary: #646870;     /* #FFF 대비 5.59:1 (AA 충족) */
+  --color-text-muted: #969BA5;         /* 장식·비활성 전용 (기능 정보 금지) */
+  --color-border-subtle: #E2E0D8;      /* 패널·리더 구분선 */
+  --color-border-strong: #C9C5B9;      /* 강조 구분선·스피너 트랙 */
+  --color-border-control: #8A8579;     /* 입력·선택·보조버튼 경계 (#FFF 대비 3.68:1) */
 
   --color-accent-primary: #2B5B84;
   --color-accent-primary-hover: #234B6E;
   --color-accent-primary-soft: #E8F0F7;
   --color-accent-contrast: #FFFFFF;
 
-  /* 6-Tier Epistemic Status Tokens (기획서 6.2절 사실·추론·확정 구분) */
-  --status-canon-fg: #234B6E;
-  --status-canon-bg: #E8F0F7;
-  --status-canon-border: #B8CFE3;
+  /* 6-Tier Epistemic Status Tokens */
+  --status-canon-fg: #234B6E;      --status-canon-bg: #E8F0F7;      --status-canon-border: #B8CFE3;
+  --status-fact-fg: #2E6F5E;       --status-fact-bg: #E7F3EF;       --status-fact-border: #B5D8CE;
+  --status-claim-fg: #3B7A8C;      --status-claim-bg: #EBF4F7;      --status-claim-border: #B9D7E0;
+  --status-candidate-fg: #7A6B99;  --status-candidate-bg: #F1EEF7;  --status-candidate-border: #CFC6E0;
+  --status-warning-fg: #C86D2D;    --status-warning-bg: #FBF0E8;    --status-warning-border: #EBC6AC;
+  --status-deprecated-fg: #646870; --status-deprecated-bg: #ECEAE4; --status-deprecated-border: #D2CFC5;
+  --status-danger-fg: #B54444;     --status-danger-bg: #FBEAEA;     --status-danger-border: #E5BABA;
 
-  --status-fact-fg: #2E6F5E;
-  --status-fact-bg: #E7F3EF;
-  --status-fact-border: #B5D8CE;
+  /* Diff & Highlight Tokens (Light) */
+  --diff-added-bg: #E7F3EF;   --diff-added-fg: #1F5144;
+  --diff-removed-bg: #FBEAEA; --diff-removed-fg: #8E3030;
+  --anchor-highlight-bg: rgba(43, 91, 132, 0.16);
+  --anchor-highlight-active-bg: rgba(43, 91, 132, 0.30);
 
-  --status-claim-fg: #3B7A8C;
-  --status-claim-bg: #EBF4F7;
-  --status-claim-border: #B9D7E0;
-
-  --status-candidate-fg: #7A6B99;
-  --status-candidate-bg: #F1EEF7;
-  --status-candidate-border: #CFC6E0;
-
-  --status-warning-fg: #C86D2D;
-  --status-warning-bg: #FBF0E8;
-  --status-warning-border: #EBC6AC;
-
-  --status-deprecated-fg: #646870;
-  --status-deprecated-bg: #ECEAE4;
-  --status-deprecated-border: #D2CFC5;
-
-  --status-danger-fg: #B54444;
-  --status-danger-bg: #FBEAEA;
-
-  /* Selective Neumorphism Shadows (Light) */
+  /* Selective Neumorphism (KPI 카드 & 핵심 CTA 한정) */
   --neu-shadow-raised: -4px -4px 10px rgba(255, 255, 255, 0.85), 4px 4px 10px rgba(214, 211, 201, 0.65);
   --neu-shadow-pressed: inset 3px 3px 6px rgba(214, 211, 201, 0.7), inset -3px -3px 6px rgba(255, 255, 255, 0.85);
   --neu-shadow-cta: -3px -3px 8px rgba(255, 255, 255, 0.8), 4px 4px 10px rgba(43, 91, 132, 0.28);
@@ -103,45 +94,30 @@
   --color-canvas-secondary: #121315;
   --color-surface-elevated: #222428;
   --color-text-primary: #E6E6E8;
-  --color-text-secondary: #969BA5;
+  --color-text-secondary: #969BA5;     /* #222428 대비 5.57:1 (AA 충족) */
   --color-text-muted: #646870;
   --color-border-subtle: #2F3238;
   --color-border-strong: #454952;
+  --color-border-control: #737882;     /* 입력·선택·보조버튼 경계 (#222428 대비 3.51:1) */
 
   --color-accent-primary: #5B9BD5;
   --color-accent-primary-hover: #73ACE0;
   --color-accent-primary-soft: #1A2B3C;
   --color-accent-contrast: #121315;
 
-  /* 6-Tier Epistemic Status Tokens (Dark) */
-  --status-canon-fg: #7BB2E3;
-  --status-canon-bg: #1A2B3C;
-  --status-canon-border: #2B4661;
+  --status-canon-fg: #7BB2E3;      --status-canon-bg: #1A2B3C;      --status-canon-border: #2B4661;
+  --status-fact-fg: #6AC2AA;       --status-fact-bg: #192E28;       --status-fact-border: #294D43;
+  --status-claim-fg: #79BED1;      --status-claim-bg: #1B2E34;      --status-claim-border: #2C4B54;
+  --status-candidate-fg: #B3A4D6;  --status-candidate-bg: #282334;  --status-candidate-border: #3F3752;
+  --status-warning-fg: #E89B63;    --status-warning-bg: #382417;    --status-warning-border: #593924;
+  --status-deprecated-fg: #969BA5; --status-deprecated-bg: #222428; --status-deprecated-border: #383B42;
+  --status-danger-fg: #DF6C6C;     --status-danger-bg: #381B1B;     --status-danger-border: #6B3434;
 
-  --status-fact-fg: #6AC2AA;
-  --status-fact-bg: #192E28;
-  --status-fact-border: #294D43;
+  --diff-added-bg: #192E28;   --diff-added-fg: #84D4BE;
+  --diff-removed-bg: #381B1B; --diff-removed-fg: #F08A8A;
+  --anchor-highlight-bg: rgba(91, 155, 213, 0.22);
+  --anchor-highlight-active-bg: rgba(91, 155, 213, 0.38);
 
-  --status-claim-fg: #79BED1;
-  --status-claim-bg: #1B2E34;
-  --status-claim-border: #2C4B54;
-
-  --status-candidate-fg: #B3A4D6;
-  --status-candidate-bg: #282334;
-  --status-candidate-border: #3F3752;
-
-  --status-warning-fg: #E89B63;
-  --status-warning-bg: #382417;
-  --status-warning-border: #593924;
-
-  --status-deprecated-fg: #969BA5;
-  --status-deprecated-bg: #222428;
-  --status-deprecated-border: #383B42;
-
-  --status-danger-fg: #DF6C6C;
-  --status-danger-bg: #381B1B;
-
-  /* Selective Neumorphism Shadows (Dark) */
   --neu-shadow-raised: -4px -4px 10px rgba(36, 38, 43, 0.75), 4px 4px 10px rgba(12, 13, 15, 0.85);
   --neu-shadow-pressed: inset 3px 3px 6px rgba(12, 13, 15, 0.85), inset -3px -3px 6px rgba(36, 38, 43, 0.7);
   --neu-shadow-cta: -3px -3px 8px rgba(36, 38, 43, 0.7), 4px 4px 12px rgba(0, 0, 0, 0.75);

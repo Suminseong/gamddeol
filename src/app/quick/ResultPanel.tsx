@@ -3,7 +3,7 @@ import type { ReviewConfig } from '../../review/config';
 import { REVIEW_PERSPECTIVES, type ReviewPerspective } from '../../review/perspectives';
 import type { ReviewError, ReviewResult } from '../../review/types';
 import { copy } from '../copy';
-import type { RunState } from '../useReviewRunner';
+import type { RunState } from './useReviewRunner';
 
 interface ResultPanelProps {
   state: RunState;

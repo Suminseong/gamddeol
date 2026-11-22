@@ -2,7 +2,7 @@
   "name": "gamddeol",
   "private": true,
   "version": "0.1.0-alpha.0",
-  "description": "감떨 알파: 브라우저에서 OpenAI Responses API로 원고 감평을 요청하는 개인 검증용 웹앱",
+  "description": "감떨: 작가용 원고·설정 관리와 감평 웹앱 (작품 자료는 브라우저 탭 메모리에만, AI 요청은 OpenAI Responses API로만)",
   "license": "MIT",
   "type": "module",
   "engines": {

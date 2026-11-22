@@ -38,31 +38,36 @@ export function createReviewService(
       if (!check.ok) throw new ReviewError('invalid_input', { inputProblem: check.reason });
 
       const body = buildResponsesRequest(manuscript, config, perspective);
-      const startedAt = now();
-
-      let response;
-      try {
-        response = await transport.send({
-          apiKey,
-          body,
-          timeoutMs: config.requestTimeoutMs,
-          signal: options.signal,
-        });
-      } catch (error) {
-        if (error instanceof TransportError) throw reviewErrorFromTransport(error);
-        throw new ReviewError('network');
-      }
-
-      if (response.status < 200 || response.status >= 300) {
-        throw reviewErrorFromHttp(response.status, response.bodyText);
-      }
-
-      const parsed = parseResponsesBody(response.bodyText);
-      return {
-        ...parsed,
-        source: transport.kind,
-        elapsedMs: Math.max(0, now() - startedAt),
-      };
+      return callResponses(transport, { apiKey, body, timeoutMs: config.requestTimeoutMs, signal: options.signal }, now);
     },
+  };
+}
+
+/**
+ * Responses API 한 번 호출: 전송 → HTTP 오류 분류 → 응답 해석. 감평과 설정 후보 추출이 함께 쓴다.
+ * 전송은 주입받은 transport(OpenAI 공식 엔드포인트 한 곳 또는 모의)로만 한다.
+ */
+export async function callResponses(
+  transport: Transport,
+  request: { apiKey: string; body: unknown; timeoutMs: number; signal?: AbortSignal },
+  now: () => number = () => performance.now(),
+): Promise<ReviewResult> {
+  if (!request.apiKey) throw new ReviewError('no_key');
+  const startedAt = now();
+  let response;
+  try {
+    response = await transport.send(request);
+  } catch (error) {
+    if (error instanceof TransportError) throw reviewErrorFromTransport(error);
+    throw new ReviewError('network');
+  }
+  if (response.status < 200 || response.status >= 300) {
+    throw reviewErrorFromHttp(response.status, response.bodyText);
+  }
+  const parsed = parseResponsesBody(response.bodyText);
+  return {
+    ...parsed,
+    source: transport.kind,
+    elapsedMs: Math.max(0, now() - startedAt),
   };
 }

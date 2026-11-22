@@ -21,7 +21,7 @@ test.describe('360px 화면', () => {
 
   test('가로로 넘치지 않고, 입력은 16px 이상·누르는 대상은 44px 이상이다', async ({ page }) => {
     await page.route(OPENAI_RESPONSES_ENDPOINT, (route) => fulfillJson(route, 200, mockSuccessBody()));
-    await page.goto('./');
+    await page.goto('review');
 
     const overflow = () =>
       page.evaluate(() => {
@@ -63,7 +63,7 @@ test.describe('360px 화면', () => {
 });
 
 test('키보드 순서는 키 → 등록 → 지우기 → 원고 → 관점 → 실행이다', async ({ page }) => {
-  await page.goto('./');
+  await page.goto('review');
   await registerFakeKey(page);
   await fillUiCheckText(page);
   await page.getByLabel('OpenAI API 키').focus();
@@ -84,7 +84,7 @@ test('키보드로 실행하면 취소 버튼으로, 끝나면 실행 버튼으�
     await gate;
     await fulfillJson(route, 200, mockSuccessBody());
   });
-  await page.goto('./');
+  await page.goto('review');
   await registerFakeKey(page);
   await fillUiCheckText(page);
 
@@ -102,7 +102,7 @@ test('대기 중 경과 시간은 화면에만 바뀌고 스크린리더 상태 
   await page.route(OPENAI_RESPONSES_ENDPOINT, async () => {
     // 응답하지 않는다.
   });
-  await page.goto('./');
+  await page.goto('review');
   await registerFakeKey(page);
   await fillUiCheckText(page);
   await runButton(page).click();
@@ -119,7 +119,7 @@ test('대기 중 경과 시간은 화면에만 바뀌고 스크린리더 상태 
 
 test('긴 결과 본문은 키보드로 초점을 옮겨 스크롤할 수 있다', async ({ page }) => {
   await page.route(OPENAI_RESPONSES_ENDPOINT, (route) => fulfillJson(route, 200, mockSuccessBody(LONG_MOCK_TEXT)));
-  await page.goto('./');
+  await page.goto('review');
   await registerFakeKey(page);
   await fillUiCheckText(page);
   await runButton(page).click();

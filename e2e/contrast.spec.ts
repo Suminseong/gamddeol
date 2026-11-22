@@ -130,7 +130,7 @@ for (const scheme of ['light', 'dark'] as const) {
     test.use({ colorScheme: scheme });
 
     test.beforeEach(async ({ page }) => {
-      await page.goto('./');
+      await page.goto('review');
       await expect(page.locator('html')).toHaveAttribute('data-theme', scheme);
     });
 

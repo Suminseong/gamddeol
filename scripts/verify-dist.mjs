@@ -17,6 +17,10 @@ function walk(dir) {
 const files = walk(DIST).map((path) => relative(DIST, path).split('\\').join('/'));
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');
 
+// GitHub Pages 직접 진입·새로고침: 404.html이 index.html과 똑같아야 앱이 주소를 읽어 화면을 그린다.
+if (!files.includes('404.html')) problems.push('404.html이 없습니다(직접 진입·새로고침 대비).');
+else if (readFileSync(join(DIST, '404.html'), 'utf8') !== html) problems.push('404.html이 index.html과 다릅니다.');
+
 const csp = html.match(/<meta http-equiv="Content-Security-Policy" content="([^"]+)"/)?.[1];
 if (!csp) {
   problems.push('index.html에 CSP meta가 없습니다.');
@@ -51,4 +55,4 @@ if (problems.length > 0) {
   process.stderr.write(`dist 검사 실패:\n- ${problems.join('\n- ')}\n`);
   process.exit(1);
 }
-process.stdout.write(`dist 검사 통과: 파일 ${files.length}개, JS ${jsFiles.length}개, CSP 확인\n`);
+process.stdout.write(`dist 검사 통과: 파일 ${files.length}개, JS ${jsFiles.length}개, CSP·404.html 확인\n`);

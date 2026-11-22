@@ -138,7 +138,7 @@ test('실제 OpenAI 엔드포인트 브라우저 호출 확인 (가짜 키)', as
   test.skip(process.env.OPENAI_PROBE !== '1', 'OPENAI_PROBE=1일 때만 실행');
   const audit = auditPage(page, baseURL!);
 
-  await page.goto('./');
+  await page.goto('review');
   await registerFakeKey(page);
   await fillUiCheckText(page);
   await page.getByRole('button', { name: '감평 실행' }).click();

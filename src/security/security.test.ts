@@ -60,11 +60,18 @@ describe('소스 코드 위생', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('URL·history에 값을 쓰지 않는다', () => {
-    const offenders = files
-      .filter((file) => /history\.(push|replace)State|location\.(hash|search|href)\s*=/.test(file.text))
+  it('방문 기록(history)은 라우터만 쓰고, location에 직접 값을 넣지 않는다', () => {
+    const historyWriters = files.filter((file) => /history\.(push|replace)State/.test(file.text)).map((file) => file.name);
+    expect(historyWriters).toEqual(['router/router.ts']);
+    const locationWriters = files
+      .filter((file) => /location\.(hash|search|href|pathname)\s*=|location\.(assign|replace)\s*\(/.test(file.text))
       .map((file) => file.name);
-    expect(offenders).toEqual([]);
+    expect(locationWriters).toEqual([]);
+  });
+
+  it('라우터는 쓰기 전에 주소를 허용 목록으로 거른다', () => {
+    const router = files.find((file) => file.name === 'router/router.ts')!;
+    expect(router.text).toMatch(/const target = sanitizeLocation\(splitTarget\(to\)\)/);
   });
 });
 
