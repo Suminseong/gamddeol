@@ -1,6 +1,7 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { buildResponsesRequest } from '../review/buildRequest';
 import { REVIEW_CONFIG } from '../review/config';
 import { createReviewService } from '../review/reviewService';
 import { createKeySession } from '../session/keySession';
@@ -119,10 +120,11 @@ describe('App', () => {
 
     expect(await screen.findByText('적용한 감평 관점 · 전개·몰입')).toBeTruthy();
     expect(transport.calls).toHaveLength(1);
-    const first = transport.calls[0]!.body;
-    expect(first.input).toBe(UI_CHECK_TEXT);
-    expect(first.instructions).toContain(REVIEW_CONFIG.instructions);
-    expect(first.instructions).toContain('전개 속도');
+    const base = buildResponsesRequest(UI_CHECK_TEXT, REVIEW_CONFIG);
+    expect(transport.calls[0]?.body).toEqual({
+      ...base,
+      instructions: expect.stringContaining(`${REVIEW_CONFIG.instructions}\n\n전개 속도`),
+    });
 
     await user.selectOptions(selector, 'coherence');
     expect(screen.getByText('적용한 감평 관점 · 전개·몰입')).toBeTruthy();
@@ -132,8 +134,8 @@ describe('App', () => {
     expect(await screen.findByText('적용한 감평 관점 · 인물·설정 일관성')).toBeTruthy();
     expect(transport.calls).toHaveLength(2);
     expect(transport.calls[1]?.body).toEqual({
-      ...first,
-      instructions: expect.stringContaining('인물의 행동과 동기'),
+      ...base,
+      instructions: expect.stringContaining(`${REVIEW_CONFIG.instructions}\n\n인물의 행동과 동기`),
     });
   });
 
