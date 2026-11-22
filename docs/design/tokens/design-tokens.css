@@ -1,0 +1,192 @@
+/**
+ * 작가용 창작 관리 플랫폼 & 가상 연재 시뮬레이터
+ * Design System Tokens & Selective Neumorphism CSS v0.2
+ * Author: Gemini (Design, UX & Copy) | Date: 2026-11-22
+ */
+
+:root {
+  /* Typography */
+  --font-ui: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-reader-serif: 'RIDIBatang', 'Noto Serif KR', Georgia, serif;
+  --font-reader-sans: 'Pretendard Variable', Pretendard, sans-serif;
+  --font-reader-active: var(--font-reader-serif);
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Type Scale */
+  --text-xs: 0.75rem;      /* 12px */
+  --text-sm: 0.8125rem;    /* 13px */
+  --text-base: 0.9375rem;  /* 15px */
+  --text-md: 1rem;         /* 16px */
+  --text-reader: 1.0625rem;/* 17px */
+  --text-lg: 1.125rem;     /* 18px */
+  --text-xl: 1.375rem;     /* 22px */
+  --text-2xl: 1.75rem;     /* 28px */
+
+  /* Line Heights & Reader Measure */
+  --leading-tight: 1.3;
+  --leading-ui: 1.5;
+  --leading-reader: 1.8;
+  --reader-max-width: 700px; /* ~38-45 Korean characters per line */
+
+  /* Layout Dimensions */
+  --sidebar-width: 220px;
+  --sidebar-collapsed-width: 64px;
+  --inspector-width: 380px;
+
+  /* Spacing & Radii */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-full: 9999px;
+
+  /* Light Mode (Paper Tone - Default) */
+  --color-canvas-primary: #F6F5F2;
+  --color-canvas-secondary: #ECEAE4;
+  --color-surface-elevated: #FFFFFF;
+  --color-text-primary: #1E1F22;
+  --color-text-secondary: #646870;
+  --color-text-muted: #969BA5;
+  --color-border-subtle: #E2E0D8;
+  --color-border-strong: #C9C5B9;
+
+  --color-accent-primary: #2B5B84;
+  --color-accent-primary-hover: #234B6E;
+  --color-accent-primary-soft: #E8F0F7;
+  --color-accent-contrast: #FFFFFF;
+
+  /* 6-Tier Epistemic Status Tokens (기획서 6.2절 사실·추론·확정 구분) */
+  --status-canon-fg: #234B6E;
+  --status-canon-bg: #E8F0F7;
+  --status-canon-border: #B8CFE3;
+
+  --status-fact-fg: #2E6F5E;
+  --status-fact-bg: #E7F3EF;
+  --status-fact-border: #B5D8CE;
+
+  --status-claim-fg: #3B7A8C;
+  --status-claim-bg: #EBF4F7;
+  --status-claim-border: #B9D7E0;
+
+  --status-candidate-fg: #7A6B99;
+  --status-candidate-bg: #F1EEF7;
+  --status-candidate-border: #CFC6E0;
+
+  --status-warning-fg: #C86D2D;
+  --status-warning-bg: #FBF0E8;
+  --status-warning-border: #EBC6AC;
+
+  --status-deprecated-fg: #646870;
+  --status-deprecated-bg: #ECEAE4;
+  --status-deprecated-border: #D2CFC5;
+
+  --status-danger-fg: #B54444;
+  --status-danger-bg: #FBEAEA;
+
+  /* Selective Neumorphism Shadows (Light) */
+  --neu-shadow-raised: -4px -4px 10px rgba(255, 255, 255, 0.85), 4px 4px 10px rgba(214, 211, 201, 0.65);
+  --neu-shadow-pressed: inset 3px 3px 6px rgba(214, 211, 201, 0.7), inset -3px -3px 6px rgba(255, 255, 255, 0.85);
+  --neu-shadow-cta: -3px -3px 8px rgba(255, 255, 255, 0.8), 4px 4px 10px rgba(43, 91, 132, 0.28);
+}
+
+[data-theme="dark"] {
+  /* Dark Mode (Ink Tone) */
+  --color-canvas-primary: #18191B;
+  --color-canvas-secondary: #121315;
+  --color-surface-elevated: #222428;
+  --color-text-primary: #E6E6E8;
+  --color-text-secondary: #969BA5;
+  --color-text-muted: #646870;
+  --color-border-subtle: #2F3238;
+  --color-border-strong: #454952;
+
+  --color-accent-primary: #5B9BD5;
+  --color-accent-primary-hover: #73ACE0;
+  --color-accent-primary-soft: #1A2B3C;
+  --color-accent-contrast: #121315;
+
+  /* 6-Tier Epistemic Status Tokens (Dark) */
+  --status-canon-fg: #7BB2E3;
+  --status-canon-bg: #1A2B3C;
+  --status-canon-border: #2B4661;
+
+  --status-fact-fg: #6AC2AA;
+  --status-fact-bg: #192E28;
+  --status-fact-border: #294D43;
+
+  --status-claim-fg: #79BED1;
+  --status-claim-bg: #1B2E34;
+  --status-claim-border: #2C4B54;
+
+  --status-candidate-fg: #B3A4D6;
+  --status-candidate-bg: #282334;
+  --status-candidate-border: #3F3752;
+
+  --status-warning-fg: #E89B63;
+  --status-warning-bg: #382417;
+  --status-warning-border: #593924;
+
+  --status-deprecated-fg: #969BA5;
+  --status-deprecated-bg: #222428;
+  --status-deprecated-border: #383B42;
+
+  --status-danger-fg: #DF6C6C;
+  --status-danger-bg: #381B1B;
+
+  /* Selective Neumorphism Shadows (Dark) */
+  --neu-shadow-raised: -4px -4px 10px rgba(36, 38, 43, 0.75), 4px 4px 10px rgba(12, 13, 15, 0.85);
+  --neu-shadow-pressed: inset 3px 3px 6px rgba(12, 13, 15, 0.85), inset -3px -3px 6px rgba(36, 38, 43, 0.7);
+  --neu-shadow-cta: -3px -3px 8px rgba(36, 38, 43, 0.7), 4px 4px 12px rgba(0, 0, 0, 0.75);
+}
+
+/* Selective Neumorphism Component Classes (포인트 컴포넌트 전용) */
+.neu-kpi-card {
+  background-color: var(--color-canvas-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--neu-shadow-raised);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.neu-cta-button {
+  background-color: var(--color-accent-primary);
+  color: var(--color-accent-contrast);
+  border-radius: var(--radius-md);
+  box-shadow: var(--neu-shadow-cta);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+
+.neu-cta-button:hover {
+  background-color: var(--color-accent-primary-hover);
+}
+
+.neu-cta-button:active {
+  transform: translateY(1px);
+  box-shadow: var(--neu-shadow-pressed);
+}
+
+/* Flat High-Density Reader & Wiki Surfaces (장시간 열람 영역) */
+.flat-reader-surface {
+  background-color: var(--color-surface-elevated);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  font-family: var(--font-reader-active);
+  font-size: var(--text-reader);
+  line-height: var(--leading-reader);
+}
+
+.flat-reader-column {
+  max-width: var(--reader-max-width);
+  margin: 0 auto;
+  word-break: keep-all;
+}
