@@ -30,7 +30,8 @@ export function WorkHomePage({ params }: PageProps) {
   const to = (id: string) => pathFor(id, { workId });
 
   return (
-    <div className="page">
+    <div className="page editorial-dashboard">
+      <p className="editorial-eyebrow"><span aria-hidden="true">●</span> 작품 작업실</p>
       <PageHeader
         title={work.title}
         meta={
@@ -48,10 +49,22 @@ export function WorkHomePage({ params }: PageProps) {
         }
       />
 
+      {chapters.length === 0 && (
+        <section className="editorial-next-step" aria-labelledby="next-step-title">
+          <div>
+            <p className="editorial-kicker">YOUR NEXT STEP</p>
+            <h2 id="next-step-title">첫 회차를 추가해 보세요</h2>
+            <p>원고를 올리면 감평을 받아보고 작품의 설정도 정리할 수 있습니다.</p>
+          </div>
+          <Link to={to('page.import')} className="button-primary">첫 회차 올리기</Link>
+        </section>
+      )}
+
       <section aria-labelledby="kpi-heading">
-        <h2 id="kpi-heading" className="sr-only">
-          핵심 지표
-        </h2>
+        <div className="editorial-section-heading">
+          <h2 id="kpi-heading">작품 현황</h2>
+          <span>한눈에 보기</span>
+        </div>
         <ul className="kpi-grid">
           <li className="neu-kpi-card">
             <span className="kpi-label">전체 회차</span>
@@ -93,8 +106,8 @@ export function WorkHomePage({ params }: PageProps) {
         </div>
       )}
 
-      <div className="dashboard-grid">
-        <Panel title="최근 수정한 회차">
+      <div className="dashboard-grid editorial-dashboard-grid">
+        <Panel title="최근 수정한 회차" className="editorial-recent-chapters">
           {recentChapters.length === 0 ? (
             <EmptyState
               message="아직 회차가 없습니다."
@@ -115,7 +128,7 @@ export function WorkHomePage({ params }: PageProps) {
             </ul>
           )}
         </Panel>
-        <Panel title="최근 AI 작업">
+        <Panel title="최근 AI 작업" className="editorial-recent-jobs">
           {jobs.length === 0 ? (
             <EmptyState message="이 작품에서 실행한 AI 작업이 없습니다. 판본 화면에서 감평이나 설정 후보 추출을 실행할 수 있습니다." />
           ) : (
@@ -135,7 +148,7 @@ export function WorkHomePage({ params }: PageProps) {
             <Link to="/settings/usage">사용량 전체 보기</Link>
           </p>
         </Panel>
-        <Panel title="바로 가기">
+        <Panel title="바로 가기" className="editorial-shortcuts">
           <ul className="quick-actions">
             <li>
               <Link to={to('page.import')} className="button-secondary">

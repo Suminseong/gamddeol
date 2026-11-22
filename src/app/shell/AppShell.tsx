@@ -59,6 +59,7 @@ export function AppShell({ workId, crumbs, children }: { workId: string | null; 
           <span aria-hidden="true">☰</span>
         </button>
         <Link to="/works" className="wordmark">
+          <span className="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 5.5h8l4 4V19H6zM14 5.5v4h4M9 13h6M9 16h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
           감떨
         </Link>
         <nav className="breadcrumbs" aria-label="현재 위치">
@@ -107,7 +108,7 @@ export function AppShell({ workId, crumbs, children }: { workId: string | null; 
               onClick={(event) => event.stopPropagation()}
             >
               <div className="drawer-head">
-                <span className="wordmark">감떨</span>
+                <span className="wordmark"><span className="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 5.5h8l4 4V19H6zM14 5.5v4h4M9 13h6M9 16h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg></span>감떨</span>
                 <button type="button" className="icon-button" aria-label="메뉴 닫기" onClick={closeDrawer}>
                   <span aria-hidden="true">✕</span>
                 </button>

@@ -7,6 +7,7 @@ import { pathFor } from '../../router/routes';
 import type { PageProps } from '../App';
 import { Link, useNavigate, useServices, useWorkspace } from '../context';
 import { Badge, EmptyState, ErrorBanner, InfoBanner, PageHeader, SelectField, TextField } from '../ui/primitives';
+import '../editorial-pages.css';
 
 type Sort = 'updatedAt' | 'title';
 
@@ -54,7 +55,8 @@ export function WorksPage(_: PageProps) {
   };
 
   return (
-    <div className="page">
+    <div className="page editorial-works">
+      <p className="editorial-eyebrow"><span aria-hidden="true">●</span> 나의 작업 공간</p>
       <PageHeader
         title="작품 목록"
         description="작품을 만들거나 내보내 둔 작품 JSON을 불러오세요. 자료는 이 탭 메모리에만 있습니다."
@@ -119,20 +121,33 @@ export function WorksPage(_: PageProps) {
       )}
 
       {works.length === 0 ? (
-        <EmptyState
-          message="아직 작품이 없습니다."
-          action={
+        <section className="editorial-welcome" aria-labelledby="welcome-title">
+          <div className="editorial-welcome-copy">
+            <p className="editorial-kicker">WORKSPACE · 01</p>
+            <h2 id="welcome-title">아직 작품이 없습니다.</h2>
+            <p className="editorial-lead">이야기가 머무를 자리를 만들어 보세요.</p>
+            <p>작품을 만들고 원고를 더하면 감평과 설정 관리를 한곳에서 시작할 수 있습니다.</p>
             <button type="button" className="button-primary" onClick={() => navigate('/works/new')}>
               새 작품 만들기
             </button>
-          }
-        />
+            <p className="editorial-memory">이 탭을 닫거나 새로고침하면 자료가 사라집니다. 계속 작업하려면 작품 JSON을 내보낸 뒤 다시 불러오세요.</p>
+          </div>
+          <div className="editorial-welcome-guide" aria-label="시작 순서">
+            <p className="editorial-guide-label">시작하기</p>
+            <ol>
+              <li><span aria-hidden="true">01</span><div><strong>작품 만들기</strong><small>작품의 이름부터 정하세요.</small></div></li>
+              <li><span aria-hidden="true">02</span><div><strong>원고 추가하기</strong><small>텍스트를 붙여 넣거나 파일을 올리세요.</small></div></li>
+              <li><span aria-hidden="true">03</span><div><strong>읽고 살펴보기</strong><small>감평과 설정 관리를 시작하세요.</small></div></li>
+            </ol>
+          </div>
+        </section>
       ) : visible.length === 0 ? (
         <EmptyState message="조건에 맞는 작품이 없습니다." />
       ) : (
-        <ul className="card-grid" aria-label="작품">
+        <ul className="card-grid editorial-work-grid" aria-label="작품">
           {visible.map((work) => (
             <li key={work.id} className="work-card">
+              <span className="editorial-card-mark" aria-hidden="true">W</span>
               <h2 className="card-title">
                 <Link to={pathFor('page.workHome', { workId: work.id })}>{work.title}</Link>
               </h2>
