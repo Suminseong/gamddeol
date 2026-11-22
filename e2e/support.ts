@@ -58,6 +58,7 @@ export interface PageAudit {
 /** 페이지가 보내는 모든 요청·콘솔·오류를 기록한다. */
 export function auditPage(page: Page, baseURL: string): PageAudit {
   const base = new URL(baseURL);
+  const fallbackUrls = new Set<string>();
   const audit: PageAudit = {
     requests: [],
     apiMethods: [],
@@ -90,9 +91,14 @@ export function auditPage(page: Page, baseURL: string): PageAudit {
       response.request().resourceType() === 'document' &&
       url.origin === base.origin &&
       url.pathname.startsWith(base.pathname);
-    if (!spaFallback) audit.badResponses.push(`${response.status()} ${response.url()}`);
+    if (spaFallback) fallbackUrls.add(response.url());
+    else audit.badResponses.push(`${response.status()} ${response.url()}`);
   });
-  page.on('console', (message) => audit.consoleMessages.push({ type: message.type(), text: message.text() }));
+  page.on('console', (message) => {
+    // 위 404 문서에 대해 브라우저가 스스로 남기는 "Failed to load resource" 줄은 앱의 오류가 아니다.
+    if (message.type() === 'error' && /status of 404/.test(message.text()) && fallbackUrls.has(message.location().url)) return;
+    audit.consoleMessages.push({ type: message.type(), text: message.text() });
+  });
   page.on('pageerror', (error) => audit.pageErrors.push(String(error)));
   return audit;
 }
