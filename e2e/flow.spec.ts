@@ -93,6 +93,9 @@ test('오류마다 입력을 유지하고, 다시 시도하면 이어서 성공�
     (route) => fulfillJson(route, 429, openAIErrorBody('You exceeded your current quota.', 'insufficient_quota', 'insufficient_quota')),
     (route) => fulfillJson(route, 429, openAIErrorBody('Rate limit reached.', 'requests', 'rate_limit_exceeded')),
     (route) => fulfillJson(route, 500, openAIErrorBody('The server had an error.', 'server_error', null)),
+    // 브라우저 fetch가 TypeError로 끝나는 경우: 연결 실패와, CORS 헤더 없는 응답을 브라우저가 읽지 못한 경우가 같다.
+    // 실제 OpenAI의 401 응답에는 CORS 헤더가 없다(2026-11-22 확인). Playwright의 fulfill은 CORS 헤더를 자동으로 붙이므로
+    // 그 상황은 abort로 재현한다.
     (route) => route.abort('failed'),
     (route) => fulfillJson(route, 200, { id: 'resp_empty', status: 'completed', output: [] }),
     (route) => fulfillJson(route, 200, mockSuccessBody()),

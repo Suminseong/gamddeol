@@ -31,7 +31,7 @@ export function openAIErrorBody(message: string, type: string, code: string | nu
   return { error: { message, type, param: null, code } };
 }
 
-/** 모의 응답에도 CORS 헤더를 붙인다 (브라우저는 가로챈 응답에도 CORS 검사를 한다). */
+/** 모의 응답. CORS 헤더를 명시한다 (Playwright도 fulfill 응답에 CORS 헤더가 없으면 자동으로 붙인다). */
 export async function fulfillJson(route: Route, status: number, body: unknown) {
   await route.fulfill({
     status,
